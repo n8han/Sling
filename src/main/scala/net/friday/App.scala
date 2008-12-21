@@ -37,7 +37,8 @@ import scalaz.CharSet.UTF8
 object App {
   implicit val charSet = UTF8
   
-  val friday = new Database("friday")
+  def friday = new Database("friday")
+
   object IdPath extends Regex("/([^/]+)$") {
     def to_path(id: String) = id.replaceAll(" ", "_")
     def to_id(web: String) = web.replaceAll("_", " ")
@@ -63,10 +64,16 @@ object App {
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
         <title>{ title }</title>
+        <link rel="stylesheet" href="blueprint/screen.css" type="text/css" media="screen, projection" />
+        <link rel="stylesheet" href="blueprint/print.css" type="text/css" media="print" /> 
+        <link rel="stylesheet" href="friday.css" type="text/css" /> 
       </head>
       <body>
-        { menu }
-        { a }
+        <div class="container">
+          <h1>{ title}</h1>
+          { menu }
+          { a }
+        </div>
       </body>
     </html>
   
