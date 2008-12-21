@@ -1,5 +1,6 @@
 package net.friday
 
+import scala.util.matching.Regex
 import Function.curried
 import scalaz.OptionW._
 import scalaz.EitherW._
@@ -37,11 +38,15 @@ object App {
   implicit val charSet = UTF8
   
   val friday = new Database("friday")
-  val IdPath = "/([^/]+)$".r
+  object IdPath extends Regex("/([^/]+)$") {
+    def to_path(id: String) = id.replaceAll(" ", "_")
+    def to_id(web: String) = web.replaceAll("_", " ")
+    def unapplySeq(str: String) = super.unapplySeq(str).map(_.map(to_id))
+  }
     
   def app(implicit request: Request[Stream]) =
     request match {
-      case Path("/") => Some(redirect("Overview"))
+      case Path("/") => Some(redirect("Home"))
 
       case Path(IdPath(id)) => try {
         Some(OK(ContentType, "text/html; charset=UTF-8") << 
@@ -69,7 +74,7 @@ object App {
     <ul>
       {
         friday.all_docs map { id => 
-          <li> <a href={id}> { id } </a> </li> 
+          <li> <a href={ IdPath.to_path(id) }> { id } </a> </li> 
         }
       }
     </ul>
