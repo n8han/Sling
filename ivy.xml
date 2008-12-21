@@ -3,6 +3,12 @@
   <dependencies>
     <dependency org="org.mortbay.jetty" name="jetty" rev="6.1.14" conf="default" />
     <dependency org="net.databinder" name="databinder-dispatch" rev="1.2.2-SNAPSHOT" conf="default" />
+    <dependency org="scalaz" name="scalaz" rev="3.2" conf="default">
+      <artifact name="scalaz" url="http://projects.workingmouse.com/public/scalaz/artifacts/3.2/scalaz.jar" />
+    </dependency>
+    <dependency org="slinky" name="slinky" rev="2.1" conf="default">
+      <artifact name="slinky" url="http://slinky2.googlecode.com/svn/artifacts/2.1/slinky.jar" />
+    </dependency>
   </dependencies>
 </ivy-module>
 
