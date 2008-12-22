@@ -1,22 +1,15 @@
 package net.friday
 
-import scala.util.matching.Regex
-import Function.curried
-import scalaz.OptionW._
-import scalaz.EitherW._
-import scalaz.StringW._
-import scalaz.control.MonadW.{EitherMonad, OptionMonad, EitherLeftMonad, ListMonad}
-import slinky.http.servlet.{SlinkyServlet,HttpServlet, HttpServletRequest, ServletApplication, StreamStreamServletApplication}
-import slinky.http.servlet.HttpServlet._
+import slinky.http.servlet.StreamStreamServletApplication
 import slinky.http.servlet.StreamStreamServletApplication.resourceOr
-import slinky.http.{Application, ContentType}
+import slinky.http.ContentType
 import slinky.http.StreamStreamApplication._
 import slinky.http.request.Request.Stream.{MethodPath, Path}
 import slinky.http.request.{Request, GET}
-import slinky.http.response.{OK, NotFound, BadRequest}
+import slinky.http.response.{OK, NotFound}
 import slinky.http.response.xhtml.Doctype.strict
-import slinky.http.response.StreamResponse.{response, statusLine}
 
+import scala.util.matching.Regex
 import net.databinder.dispatch._
 
 final class App extends StreamStreamServletApplication {
@@ -44,7 +37,10 @@ object App {
     def to_id(web: String) = web.replaceAll("_", " ")
     def unapplySeq(str: String) = super.unapplySeq(str).map(_.map(to_id))
   }
-    
+  
+  val showdown = new js.Showdown()
+  def md2html(md: String) = scala.xml.Unparsed(showdown.makeHtml(md).toString)
+  
   def app(implicit request: Request[Stream]) =
     request match {
       case Path("/") => Some(redirect("Home"))
@@ -52,7 +48,7 @@ object App {
       case Path(IdPath(id)) => try {
         Some(OK(ContentType, "text/html; charset=UTF-8") << 
           strict << doc("Friday — " + id, 
-            (friday(id) >> { new Store(_) })(PageDoc.body).mkString("")
+            md2html((friday(id) >> { new Store(_) })(PageDoc.body).mkString(""))
           )
         )
       } catch { case e: UnexpectedResponse => None }
@@ -60,19 +56,19 @@ object App {
       case _ => None
     }
 
-  def doc[A](title: String, a: A) =
+  def doc[A](title: String, body: A) =
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
         <title>{ title }</title>
         <link rel="stylesheet" href="blueprint/screen.css" type="text/css" media="screen, projection" />
         <link rel="stylesheet" href="blueprint/print.css" type="text/css" media="print" /> 
-        <link rel="stylesheet" href="friday.css" type="text/css" /> 
+        <link rel="stylesheet" href="friday.css" type="text/css" media="screen, projection" /> 
       </head>
       <body>
         <div class="container">
-          <h1>{ title}</h1>
+          <h1>{ title }</h1>
           { menu }
-          { a }
+          { body }
         </div>
       </body>
     </html>
