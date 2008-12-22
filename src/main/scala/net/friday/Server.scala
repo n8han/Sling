@@ -1,11 +1,11 @@
 package net.friday
 
 import org.mortbay.jetty.Connector
-import org.mortbay.jetty.Server
+import org.mortbay.jetty.{Server => JettyServer}
 import org.mortbay.jetty.webapp.WebAppContext
 
 object Server extends Application {
-  val server = new Server(8080)
+  val server = new JettyServer(8080)
   val context = new WebAppContext()
   context.setServer(server)
   context.setContextPath("/")
