@@ -18,13 +18,11 @@ class FridayBuild(info: ProjectInfo) extends DefaultProject(info)
   val jetty = "org.mortbay.jetty" % "jetty" % "6.1.14"
   val dispatch = "net.databinder" % "databinder-dispatch" % "1.2.2-SNAPSHOT"
   val rhino = "rhino" % "js" % "1.7R1"
+  val scalaz = "com.workingmouse" % "scalaz" % "3.0"
 
   
   override def ivyXML =
     <dependencies>
-      <dependency org="scalaz" name="scalaz" rev="3.2" conf="default">
-        <artifact name="scalaz" url="http://projects.workingmouse.com/public/scalaz/artifacts/3.2/scalaz.jar" />
-      </dependency>
       <dependency org="slinky" name="slinky" rev="2.1" conf="default">
         <artifact name="slinky" url="http://slinky2.googlecode.com/svn/artifacts/2.1/slinky.jar" />
       </dependency>
