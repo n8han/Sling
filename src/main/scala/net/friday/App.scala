@@ -2,11 +2,11 @@ package net.friday
 
 import slinky.http.servlet.StreamStreamServletApplication
 import slinky.http.servlet.StreamStreamServletApplication.resourceOr
-import slinky.http.ContentType
+import slinky.http.{ContentType}
 import slinky.http.StreamStreamApplication._
 import slinky.http.request.Request.Stream.{MethodPath, Path}
-import slinky.http.request.{Request, GET}
-import slinky.http.response.{OK, NotFound}
+import slinky.http.request.{Request, GET, IfNoneMatch}
+import slinky.http.response.{OK, NotFound, ETag, NotModified}
 import slinky.http.response.xhtml.Doctype.strict
 
 import scala.util.matching.Regex
@@ -30,8 +30,6 @@ import scalaz.CharSet.UTF8
 object App {
   implicit val charSet = UTF8
   
-  def friday = new Database("friday")
-
   object IdPath extends Regex("/([^/]+)$") {
     def to_path(id: String) = id.replaceAll(" ", "_")
     def to_id(web: String) = web.replaceAll("_", " ")
@@ -46,11 +44,28 @@ object App {
       case Path("/") => Some(redirect("Home"))
 
       case Path(IdPath(id)) => try {
-        Some(OK(ContentType, "text/html; charset=UTF-8") << 
-          strict << doc("Friday — " + id, 
-            md2html((friday(id) >> { new Store(_) })(PageDoc.body).mkString(""))
-          )
-        )
+        val friday = new Database("friday") {
+          request.headers.foreach {
+            case (k, v) if k.asString == IfNoneMatch.asString =>
+              preflight(_.addHeader(IfNoneMatch.asString, v.mkString))
+              println("if none match-----" + v.mkString)
+            case (k,v) =>
+          }
+        }
+        
+        friday.g("/friday/"+id) { (code, res, entity) =>
+          code match {
+            case 200 =>
+              val etag = res.getFirstHeader(ETag).getValue
+              Some(OK(ContentType, "text/html; charset=UTF-8")(ETag, etag) << 
+                strict << doc("Friday — " + id, 
+                  md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
+                )
+              )
+            case 304 => Some(NotModified << strict << doc("what", "wht"))
+            case _ => None
+          }
+        }
       } catch { case e: UnexpectedResponse => None }
 
       case _ => None
@@ -76,7 +91,7 @@ object App {
   def menu =
     <ul>
       {
-        friday.all_docs map { id => 
+        new Database("friday").all_docs map { id => 
           <li> <a href={ IdPath.to_path(id) }> { id } </a> </li> 
         }
       }
