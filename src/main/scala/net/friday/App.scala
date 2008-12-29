@@ -46,9 +46,11 @@ object App {
       case Path(IdPath(id)) => try {
         val friday = new Database("friday") {
           request.headers.foreach {
+            case (IfNoneMatch, v) =>
+              preflight(_.addHeader(IfNoneMatch.asString, v.mkString))
             case (k, v) if k.asString == IfNoneMatch.asString =>
               preflight(_.addHeader(IfNoneMatch.asString, v.mkString))
-              println("if none match-----" + v.mkString)
+              println("awkward match" + v.mkString)
             case (k,v) =>
           }
         }
@@ -62,7 +64,7 @@ object App {
                   md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
                 )
               )
-            case 304 => Some(NotModified << strict << doc("what", "wht"))
+            case 304 => Some(NotModified << strict << <html /> )
             case _ => None
           }
         }
