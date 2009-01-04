@@ -80,8 +80,8 @@ object App {
       </head>
       <body>
         <div class="container">
-          <h1>{ title }</h1>
-          { menu }
+          <h2>{ title }</h2>
+          <h4>{ menu }</h4>
           { body }
         </div>
       </body>
