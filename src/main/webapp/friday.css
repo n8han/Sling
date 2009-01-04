@@ -4,7 +4,7 @@ body {
 	font-family: "DejaVu Serif", "Lucida Bright", Georgia, serif;
 	font-size: 85%;
 	background-color: #999999;
-	padding: 3em 0;
+	padding: 2.5em 0;
 }
 
 body, h1, h2, h3, h4, h5, h6, a {
@@ -17,5 +17,10 @@ ul {
 	margin-left: 0;
 }
 
-li { display: inline; }
-li a { margin-right: 3em; }
+li {
+	display: inline;
+	margin-right: 3em;
+	font-style: italic;
+}
+
+li a { font-style: normal; }

@@ -17,7 +17,7 @@ final class App extends StreamStreamServletApplication {
   val application =
     (app(_: Request[Stream])) or (req => {
       implicit val r = req
-      NotFound << strict << doc("Not Found", "Page not found")
+      NotFound(ContentType, content_type) << strict << doc("Not Found", "Page not found")
     })
 }
 
@@ -29,6 +29,7 @@ import scalaz.CharSet.UTF8
 
 object App {
   implicit val charSet = UTF8
+  def content_type = "text/html; charset=UTF-8"
   
   object IdPath extends Regex("/([^/]+)$") {
     def to_path(id: String) = id.replaceAll(" ", "_")
@@ -39,9 +40,11 @@ object App {
   val showdown = new js.Showdown()
   def md2html(md: String) = scala.xml.Unparsed(showdown.makeHtml(md).toString)
   
+  def all_docs = new Database("friday").all_docs
+  
   def app(implicit request: Request[Stream]) =
     request match {
-      case Path("/") => Some(redirect("Home"))
+      case Path("/") => Some(redirect(IdPath.to_path(all_docs.first)))
 
       case Path(IdPath(id)) => try {
         val friday = new Database("friday") {
@@ -56,8 +59,8 @@ object App {
           code match {
             case 200 =>
               val etag = res.getFirstHeader(ETag).getValue
-              Some(OK(ContentType, "text/html; charset=UTF-8")(ETag, etag) << 
-                strict << doc("Friday — " + id, 
+              Some(OK(ContentType, content_type)(ETag, etag) << 
+                strict << doc(id, 
                   md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
                 )
               )
@@ -70,28 +73,29 @@ object App {
       case _ => None
     }
 
-  def doc[A](title: String, body: A) =
+  def doc[A](curr_id: String, body: A) =
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
-        <title>{ title }</title>
+        <title>Friday — { curr_id }</title>
         <link rel="stylesheet" href="blueprint/screen.css" type="text/css" media="screen, projection" />
         <link rel="stylesheet" href="blueprint/print.css" type="text/css" media="print" /> 
         <link rel="stylesheet" href="friday.css" type="text/css" media="screen, projection" /> 
       </head>
       <body>
         <div class="container">
-          <h2>{ title }</h2>
-          <h4>{ menu }</h4>
+          <h2>Friday — { curr_id }</h2>
+          <h4>{ menu(curr_id) }</h4>
           { body }
         </div>
       </body>
     </html>
   
-  def menu =
+  def menu(curr_id: String) =
     <ul>
       {
-        new Database("friday").all_docs map { id => 
-          <li> <a href={ IdPath.to_path(id) }> { id } </a> </li> 
+        all_docs map {
+          case `curr_id` => <li> { curr_id } </li>
+          case id => <li> <a href={ IdPath.to_path(id) }> { id } </a> </li> 
         }
       }
     </ul>
