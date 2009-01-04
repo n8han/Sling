@@ -9,8 +9,7 @@ class FridayBuild(info: ProjectInfo) extends DefaultProject(info)
   val js_classpath = outputPath / "js_classes"
 
   override def mainClass = Some("net.friday.Server")
-  override def compileClasspath = super.compileClasspath +++ (js_classpath ##)
-  override def runClasspath = super.runClasspath +++ (js_classpath ##)
+  override def unmanagedClasspath = super.unmanagedClasspath +++ js_classpath
   
   val snapshots = "Databinder Snapshots" at "http://databinder.net/snapshot/"
   val scala_tools = "Scala Tools Releases" at "http://scala-tools.org/repo-releases"
