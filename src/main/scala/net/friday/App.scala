@@ -5,7 +5,7 @@ import slinky.http.servlet.StreamStreamServletApplication.resourceOr
 import slinky.http.{ContentType}
 import slinky.http.StreamStreamApplication._
 import slinky.http.request.Request.Stream.{MethodPath, Path}
-import slinky.http.request.{Request, GET, IfNoneMatch}
+import slinky.http.request.{Request, GET, IfNoneMatch, RequestHeader}
 import slinky.http.response.{OK, NotFound, ETag, NotModified}
 import slinky.http.response.xhtml.Doctype.strict
 
@@ -46,11 +46,8 @@ object App {
       case Path(IdPath(id)) => try {
         val friday = new Database("friday") {
           request.headers.foreach {
-            case (IfNoneMatch, v) =>
-              preflight(_.addHeader(IfNoneMatch.asString, v.mkString))
             case (k, v) if k.asString == IfNoneMatch.asString =>
               preflight(_.addHeader(IfNoneMatch.asString, v.mkString))
-              println("awkward match" + v.mkString)
             case (k,v) =>
           }
         }
@@ -64,7 +61,7 @@ object App {
                   md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
                 )
               )
-            case 304 => Some(NotModified << strict << <html /> )
+            case 304 => Some(response(NotModified))
             case _ => None
           }
         }
