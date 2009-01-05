@@ -56,14 +56,14 @@ object App {
         }
         
         friday(id) {
-          case (200, res, Some(entity)) =>
+          case (OK.toInt, res, Some(entity)) =>
             Some(OK(ContentType, content_type)(ETag, res.getFirstHeader(ETag).getValue) << 
               strict << doc(id, 
                 md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
               )
             )
-          case (304, _, _) => Some(response(NotModified))
-          case (404, _, _) => None 
+          case (NotModified.toInt, _, _) => Some(response(NotModified))
+          case (NotFound.toInt, _, _) => None 
         }
 
       case _ => None
