@@ -57,8 +57,7 @@ object App {
         
         friday(id) {
           case (200, res, Some(entity)) =>
-            val etag = res.getFirstHeader(ETag).getValue
-            Some(OK(ContentType, content_type)(ETag, etag) << 
+            Some(OK(ContentType, content_type)(ETag, res.getFirstHeader(ETag).getValue) << 
               strict << doc(id, 
                 md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
               )
