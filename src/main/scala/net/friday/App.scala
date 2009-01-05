@@ -55,19 +55,18 @@ object App {
           }
         }
         
-        friday.g("/friday/"+id) { (code, res, entity) =>
-          code match {
-            case 200 =>
-              val etag = res.getFirstHeader(ETag).getValue
-              Some(OK(ContentType, content_type)(ETag, etag) << 
-                strict << doc(id, 
-                  md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
-                )
+        friday(id) {
+          case (200, res, Some(entity)) =>
+            val etag = res.getFirstHeader(ETag).getValue
+            Some(OK(ContentType, content_type)(ETag, etag) << 
+              strict << doc(id, 
+                md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
               )
-            case 304 => Some(response(NotModified))
-            case _ => None
-          }
+            )
+          case (304, _, _) => Some(response(NotModified))
+          case (404, _, _) => None 
         }
+
       case _ => None
     }
 
