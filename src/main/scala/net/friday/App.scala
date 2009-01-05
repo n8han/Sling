@@ -95,7 +95,7 @@ object App {
       {
         all_docs map {
           case `curr_id` => <li> { curr_id } </li>
-          case id => <li> <a href={ IdPath.to_path(id) }> { id } </a> </li> 
+          case id => <li> <a href={ IdPath.to_path(id) }>{ id }</a> </li> 
         }
       }
     </ul>
