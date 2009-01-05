@@ -46,7 +46,7 @@ object App {
     request match {
       case Path("/") => Some(redirect(IdPath.to_path(all_docs.first)))
 
-      case Path(IdPath(id)) => try {
+      case Path(IdPath(id)) =>
         val friday = new Database("friday") {
           request.headers.foreach {
             case (k, v) if k.asString == IfNoneMatch.asString =>
@@ -68,8 +68,6 @@ object App {
             case _ => None
           }
         }
-      } catch { case e: UnexpectedResponse => None }
-
       case _ => None
     }
 
