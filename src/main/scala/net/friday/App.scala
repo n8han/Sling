@@ -40,22 +40,22 @@ object App {
   val showdown = new js.Showdown()
   def md2html(md: String) = scala.xml.Unparsed(showdown.makeHtml(md).toString)
   
-  def all_docs = new Database("friday").all_docs
+  def couch = Couch()
+  val friday = Database("friday")
+  def all_docs = friday.all_docs(couch)
   
   def app(implicit request: Request[Stream]) =
     request match {
       case Path("/") => Some(redirect(IdPath.to_path(all_docs.first)))
 
       case Path(IdPath(id)) =>
-        val friday = new Database("friday") {
-          request.headers.foreach {
-            case (k, v) if k.asString == IfNoneMatch.asString =>
-              preflight(_.addHeader(IfNoneMatch.asString, v.mkString))
-            case (k,v) =>
-          }
+        val c = (couch /: request.headers) {
+          case (couch, (k, v)) if k.asString == IfNoneMatch.asString =>
+            couch << (k.asString, v.mkString)
+          case (couch, _) => couch
         }
         
-        friday(id) {
+        friday.doc(c)(id) {
           case (OK.toInt, res, Some(entity)) =>
             Some(OK(ContentType, content_type)(ETag, res.getFirstHeader(ETag).getValue) << 
               strict << doc(id, 
