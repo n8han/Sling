@@ -50,9 +50,9 @@ object App {
 
       case Path(IdPath(id)) =>
         val c = (couch /: request.headers) {
-          case (couch, (k, v)) if k.asString == IfNoneMatch.asString =>
-            couch << (k.asString, v.mkString)
-          case (couch, _) => couch
+          case (c, (k, v)) if k.asString == IfNoneMatch.asString =>
+            c << (k.asString, v.mkString)
+          case (c, _) => c
         }
         
         friday.doc(c)(id) {
