@@ -42,20 +42,20 @@ object App {
   
   def couch = Couch()
   val friday = Database("friday")
-  def all_docs = friday.all_docs(couch)
+  def all_docs = friday(couch).all_docs
   
   def app(implicit request: Request[Stream]) =
     request match {
       case Path("/") => Some(redirect(IdPath.to_path(all_docs.first)))
 
       case Path(IdPath(id)) =>
-        val c = (couch /: request.headers) {
+        val couched = friday( (couch /: request.headers) {
           case (c, (k, v)) if k.asString == IfNoneMatch.asString =>
             c << (k.asString, v.mkString)
           case (c, _) => c
-        }
+        })
         
-        friday.doc(c)(id) {
+        couched(id) {
           case (OK.toInt, res, Some(entity)) =>
             Some(OK(ContentType, content_type)(ETag, res.getFirstHeader(ETag).getValue) << 
               strict << doc(id, 
