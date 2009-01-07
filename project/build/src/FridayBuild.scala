@@ -29,21 +29,23 @@ class FridayBuild(info: ProjectInfo) extends DefaultProject(info)
 
   
   lazy val showdown = task {
-    if (!js_classpath.asFile.exists) {
-      FileUtilities.createDirectories(js_sources.asFile :: js_classpath.asFile :: Nil, log)
+    if (!js_classpath.exists) {
+      FileUtilities.createDirectories(js_sources :: js_classpath :: Nil, log)
       val showdown_js = js_sources / "Showdown.js"
       def unzip(zis: ZipInputStream) {
         if (zis.getNextEntry.getName == "src/showdown.js") {
-          val out = new FileOutputStream(showdown_js.asFile)
-          FileUtilities.transfer(zis, out, log)
-          out.write("\nfunction makeHtml(md) { return new Showdown.converter().makeHtml('' + md) }".getBytes)
-          out.close()
+          FileUtilities.writeStream(showdown_js.asFile, log) { out =>
+            FileUtilities.transfer(zis, out, log) orElse {
+              out.write("\nfunction makeHtml(md) { return new Showdown.converter().makeHtml('' + md) }".getBytes); 
+              None
+            }
+          }
         }
         else unzip(zis)
       }
       unzip(new ZipInputStream(new URL("http://attacklab.net/showdown/showdown-v0.9.zip").openStream()))
-      Run(
-        Some("org.mozilla.javascript.tools.jsc.Main"), 
+      Run.run(
+        "org.mozilla.javascript.tools.jsc.Main",
         descendents(managedDependencyPath, "js-*.jar").get,
         "-d" :: js_classpath.toString :: "-package" :: "js" :: "-extends" :: "java.lang.Object" :: showdown_js.toString :: Nil,
         log
