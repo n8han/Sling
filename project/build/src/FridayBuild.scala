@@ -14,7 +14,7 @@ class FridayBuild(info: ProjectInfo) extends DefaultProject(info)
   val snapshots = "Databinder Snapshots" at "http://databinder.net/snapshot/"
   val scala_tools = "Scala Tools Releases" at "http://scala-tools.org/repo-releases"
 
-  val jetty = "org.mortbay.jetty" % "jetty" % "6.1.14"
+  val jetty = "org.mortbay.jetty" % "jetty-ajp" % "6.1.14"
   val dispatch = "net.databinder" % "databinder-dispatch" % "1.2.2-SNAPSHOT"
   val rhino = "rhino" % "js" % "1.7R1"
   val scalaz = "com.workingmouse" % "scalaz" % "3.0"
@@ -53,6 +53,16 @@ class FridayBuild(info: ProjectInfo) extends DefaultProject(info)
     }
     None
   }
-  
   override def compileAction = super.compileAction dependsOn(showdown)
+  
+  lazy val script = task {
+    FileUtilities.writeStream((info.projectPath / "server.sh").asFile, log) { out =>
+      out write (
+"""#! /bin/sh
+
+$JAVA_HOME/bin/java -server -cp """ + runClasspath.get.mkString(":") + """ $JAVA_OPTIONS net.friday.Server
+""").getBytes
+      None
+    }
+  }
 }
