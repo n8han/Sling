@@ -9,7 +9,6 @@ import slinky.http.request.{Request, GET, IfNoneMatch, RequestHeader}
 import slinky.http.response.{OK, NotFound, ETag, NotModified}
 import slinky.http.response.xhtml.Doctype.strict
 
-import scala.util.matching.Regex
 import net.databinder.dispatch._
 
 final class App extends StreamStreamServletApplication {
@@ -17,7 +16,7 @@ final class App extends StreamStreamServletApplication {
   val application =
     (app(_: Request[Stream])) or (req => {
       implicit val r = req
-      NotFound(ContentType, content_type) << strict << doc("Not Found", "Page not found")
+      NotFound(ContentType, content_type) << strict << doc(None, "Not Found", "Page not found")
     })
 }
 
@@ -31,25 +30,33 @@ object App {
   implicit val charSet = UTF8
   def content_type = "text/html; charset=UTF-8"
   
-  object IdPath extends Regex("/([^/]+)$") {
+  object Id {
     def to_path(id: String) = id.replaceAll(" ", "_")
     def to_id(web: String) = web.replaceAll("_", " ")
-    def unapplySeq(str: String) = super.unapplySeq(str).map(_.map(to_id))
+    val Re = "^/([a-z_]+)/([^/]+)$".r
+    def unapply(path: String) = path match {
+      case Re(db, id) => Some(Database(db), to_id(id)) 
+      case _ => None
+    }
+    def apply(db: Database, id: String) = "/" +  db.name + "/" + id
+  }
+  object Index {
+    val Re =  "^/([a-z_]+)/?$".r
+    def unapply(path: String) = path match { 
+      case Re(db) => Some(Database(db)) 
+      case _ => None
+    }
   }
   
   val showdown = new js.Showdown()
   def md2html(md: String) = scala.xml.Unparsed(showdown.makeHtml(md).toString)
   
   def couch = Couch()
-  val friday = Database("friday")
-  def all_docs = friday(couch).all_docs
   
   def app(implicit request: Request[Stream]) =
     request match {
-      case Path("/") => Some(redirect(IdPath.to_path(all_docs.first)))
-
-      case Path(IdPath(id)) =>
-        val couched = friday( (couch /: request.headers) {
+      case Path(Id(db, id)) =>
+        val couched = db( (couch /: request.headers) {
           case (c, (k, v)) if k.asString == IfNoneMatch.asString =>
             c << (k.asString, v.mkString)
           case (c, _) => c
@@ -57,42 +64,54 @@ object App {
         
         couched(id) {
           case (OK.toInt, res, Some(entity)) =>
-            Some(OK(ContentType, content_type)(ETag, res.getFirstHeader(ETag).getValue) << 
-              strict << doc(id, 
-                md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
-              )
-            )
+            val etag = res.getFirstHeader(ETag).getValue
+            id match {
+              case "style.css" =>
+                Some(OK(ContentType, "text/css; charset=UTF-8")(ETag, etag) << 
+                  new Store(entity.getContent())(PageDoc.body).mkString("").toList
+                )
+              case id =>
+                Some(OK(ContentType, content_type)(ETag, etag) << 
+                  strict << doc(Some(couched), id, 
+                    md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
+                  )
+                )
+            }
           case (NotModified.toInt, _, _) => Some(response(NotModified))
           case (NotFound.toInt, _, _) => None 
         }
 
+      case Path(Index(db)) => Some(redirect(Id(db, db(couch).all_docs.first)))
       case _ => None
     }
 
-  def doc[A](curr_id: String, body: A) =
+  def doc[A](db: Option[Database#H], curr_id: String, body: A) = {
+    val title = db.map(d => d.name.capitalize + " → ").mkString + curr_id
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
-        <title>Friday — { curr_id }</title>
-        <link rel="stylesheet" href="blueprint/screen.css" type="text/css" media="screen, projection" />
-        <link rel="stylesheet" href="blueprint/print.css" type="text/css" media="print" /> 
-        <link rel="stylesheet" href="friday.css" type="text/css" media="screen, projection" /> 
+        <title>{ title }</title>
+        <link rel="stylesheet" href="/blueprint/screen.css" type="text/css" media="screen, projection" />
+        <link rel="stylesheet" href="/blueprint/print.css" type="text/css" media="print" /> 
+        <link rel="stylesheet" href="style.css" type="text/css" media="screen, projection" /> 
       </head>
       <body>
         <div class="container">
-          <h2>Friday — { curr_id }</h2>
-          <h4>{ menu(curr_id) }</h4>
+          <h2>{ title }</h2>
+          <h4>{ menu(db, curr_id) }</h4>
           { body }
         </div>
       </body>
     </html>
+  }
   
-  def menu(curr_id: String) =
+  def menu(db: Option[Database#H], curr_id: String) =
     <ul>
       {
-        all_docs map {
+        db map { _.all_docs map {
+          case "style.css" => ""
           case `curr_id` => <li> { curr_id } </li>
-          case id => <li> <a href={ IdPath.to_path(id) }>{ id }</a> </li> 
-        }
+          case id => <li> <a href={ Id.to_path(id) }>{ id }</a> </li> 
+        } } getOrElse ""
       }
     </ul>
 }
