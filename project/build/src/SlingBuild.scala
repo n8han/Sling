@@ -3,12 +3,12 @@ import java.util.zip.ZipInputStream
 import java.io.FileOutputStream
 import java.net.URL
 
-class FridayBuild(info: ProjectInfo) extends DefaultProject(info)
+class SlingBuild(info: ProjectInfo) extends DefaultProject(info)
 {
   val js_sources = outputPath / "js"
   val js_classpath = outputPath / "js_classes"
 
-  override def mainClass = Some("net.friday.Server")
+  override def mainClass = Some("net.databinder.sling.Server")
   override def unmanagedClasspath = super.unmanagedClasspath +++ js_classpath
   
   val snapshots = "Databinder Snapshots" at "http://databinder.net/snapshot/"
@@ -56,12 +56,12 @@ class FridayBuild(info: ProjectInfo) extends DefaultProject(info)
   override def compileAction = super.compileAction dependsOn(showdown)
   
   lazy val script = task {
-    FileUtilities.writeStream((info.projectPath / "server.sh").asFile, log) { out =>
+    FileUtilities.writeStream((info.projectPath / "run.sh").asFile, log) { out =>
       out write (
-"""#! /bin/sh
-
-$JAVA_HOME/bin/java -server -cp """ + runClasspath.get.mkString(":") + """ $JAVA_OPTIONS net.friday.Server
-""").getBytes
+        "#! /bin/sh\n\n$JAVA_HOME/bin/java -cp " + 
+        runClasspath.get.mkString(":") + 
+        " $JAVA_OPTIONS " + mainClass.mkString + "\n"
+      ).getBytes
       None
     }
   }

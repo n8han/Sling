@@ -1,4 +1,4 @@
-package net.friday
+package net.databinder.sling
 
 import slinky.http.servlet.StreamStreamServletApplication
 import slinky.http.servlet.StreamStreamServletApplication.resourceOr
