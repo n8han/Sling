@@ -2,7 +2,7 @@ package net.databinder.sling
 
 import slinky.http.servlet.StreamStreamServletApplication
 import slinky.http.servlet.StreamStreamServletApplication.resourceOr
-import slinky.http.{ContentType}
+import slinky.http.{ContentType, Date, CacheControl}
 import slinky.http.StreamStreamApplication._
 import slinky.http.request.Request.Stream.{MethodPath, Path}
 import slinky.http.request.{Request, GET, IfNoneMatch, RequestHeader}
@@ -10,6 +10,7 @@ import slinky.http.response.{OK, NotFound, ETag, NotModified}
 import slinky.http.response.xhtml.Doctype.strict
 
 import net.databinder.dispatch._
+import org.apache.http.HttpResponse
 
 final class App extends StreamStreamServletApplication {
   import App._
@@ -53,6 +54,9 @@ object App {
   
   def couch = Couch()
   
+  def hed(res: HttpResponse, h: Any) = res.getFirstHeader(h.toString).getValue
+  def cache_control = "max-age=1800"
+  
   def app(implicit request: Request[Stream]) =
     request match {
       case Path(Id(db, id)) =>
@@ -64,20 +68,19 @@ object App {
         
         couched(id) {
           case (OK.toInt, res, Some(entity)) =>
-            val etag = res.getFirstHeader(ETag).getValue
             id match {
               case "style.css" =>
-                Some(OK(ContentType, "text/css; charset=UTF-8")(ETag, etag) << 
+                Some(OK(ContentType, "text/css; charset=UTF-8")(Date, hed(res, Date))(CacheControl, cache_control)(ETag, hed(res, ETag)) << 
                   new Store(entity.getContent())(PageDoc.body).mkString("").toList
                 )
               case id =>
-                Some(OK(ContentType, content_type)(ETag, etag) << 
+                Some(OK(ContentType, content_type)(Date, hed(res, Date))(CacheControl, cache_control)(ETag, hed(res, ETag)) << 
                   strict << doc(Some(couched), id, 
                     md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
                   )
                 )
             }
-          case (NotModified.toInt, _, _) => Some(response(NotModified))
+          case (NotModified.toInt, res, _) => Some(NotModified(Date, hed(res, Date))(CacheControl, cache_control)(ETag, hed(res, ETag)))
           case (NotFound.toInt, _, _) => None 
         }
 
