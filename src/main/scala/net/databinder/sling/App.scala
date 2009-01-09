@@ -6,7 +6,7 @@ import slinky.http.{ContentType, Date, CacheControl}
 import slinky.http.StreamStreamApplication._
 import slinky.http.request.Request.Stream.{MethodPath, Path}
 import slinky.http.request.{Request, GET, IfNoneMatch, RequestHeader}
-import slinky.http.response.{OK, NotFound, ETag, NotModified}
+import slinky.http.response.{Response, OK, NotFound, ETag, NotModified}
 import slinky.http.response.xhtml.Doctype.strict
 
 import net.databinder.dispatch._
@@ -54,8 +54,8 @@ object App {
   
   def couch = Couch()
   
-  def hed(res: HttpResponse, h: Any) = res.getFirstHeader(h.toString).getValue
-  def cache_control = "max-age=600"
+  def cache_heds(ri: HttpResponse, ro: Response[Stream]) = 
+    ro(Date, ri.getFirstHeader(Date).getValue)(CacheControl, "max-age=600")(ETag, ri.getFirstHeader(ETag).getValue)
   
   def app(implicit request: Request[Stream]) =
     request match {
@@ -67,20 +67,18 @@ object App {
         })
         
         couched(id) {
-          case (OK.toInt, res, Some(entity)) =>
+          case (OK.toInt, ri, Some(entity)) =>
             id match {
               case "style.css" =>
-                Some(OK(ContentType, "text/css; charset=UTF-8")(Date, hed(res, Date))(CacheControl, cache_control)(ETag, hed(res, ETag)) << 
+                Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8")) << 
                   new Store(entity.getContent())(PageDoc.body).mkString("").toList
                 )
               case id =>
-                Some(OK(ContentType, content_type)(Date, hed(res, Date))(CacheControl, cache_control)(ETag, hed(res, ETag)) << 
-                  strict << doc(Some(couched), id, 
-                    md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
-                  )
-                )
+                Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
+                  Some(couched), id, md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
+                ))
             }
-          case (NotModified.toInt, res, _) => Some(NotModified(Date, hed(res, Date))(CacheControl, cache_control)(ETag, hed(res, ETag)))
+          case (NotModified.toInt, ri, _) => Some(cache_heds(ri, NotModified))
           case (NotFound.toInt, _, _) => None 
         }
 
