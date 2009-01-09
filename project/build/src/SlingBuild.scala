@@ -58,9 +58,9 @@ class SlingBuild(info: ProjectInfo) extends DefaultProject(info)
   lazy val script = task {
     FileUtilities.writeStream((info.projectPath / "run.sh").asFile, log) { out =>
       out write (
-        "#! /bin/sh\n\n$JAVA_HOME/bin/java -cp " + 
+        "#! /bin/sh\n\nnohup $JAVA_HOME/bin/java -cp " + 
         runClasspath.get.mkString(":") + 
-        " $JAVA_OPTIONS " + mainClass.mkString + "\n"
+        " $JAVA_OPTIONS " + mainClass.mkString + " >/dev/null &\\echo $! > run.pid\n"
       ).getBytes
       None
     }

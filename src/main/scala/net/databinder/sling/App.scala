@@ -55,14 +55,14 @@ object App {
   def couch = Couch()
   
   def hed(res: HttpResponse, h: Any) = res.getFirstHeader(h.toString).getValue
-  def cache_control = "max-age=1800"
+  def cache_control = "max-age=600"
   
   def app(implicit request: Request[Stream]) =
     request match {
       case Path(Id(db, id)) =>
         val couched = db( (couch /: request.headers) {
           case (c, (k, v)) if k.asString == IfNoneMatch.asString =>
-            c << (k.asString, v.mkString)
+            c << (k.asString, v.mkString.replace("-gzip","")) // gross: https://issues.apache.org/bugzilla/show_bug.cgi?id=39727
           case (c, _) => c
         })
         
