@@ -8,6 +8,8 @@ import slinky.http.request.Request.Stream.{MethodPath, Path}
 import slinky.http.request.{Request, GET, IfNoneMatch, RequestHeader}
 import slinky.http.response.{Response, OK, NotFound, ETag, NotModified}
 import slinky.http.response.xhtml.Doctype.strict
+import scalaz.OptionW.onull
+import scalaz.CharSet.UTF8
 
 import net.databinder.dispatch._
 import org.apache.http.HttpResponse
@@ -25,8 +27,6 @@ object PageDoc extends Doc {
   val body = String('body)
 }
 
-import scalaz.CharSet.UTF8
-
 object App {
   implicit val charSet = UTF8
   def content_type = "text/html; charset=UTF-8"
@@ -34,12 +34,13 @@ object App {
   object DbId {
     def to_path(id: String) = id.replaceAll(" ", "_")
     def to_id(web: String) = web.replaceAll("_", " ")
-    val Re = "^/([a-z_]+)/([^/]+)$".r
+    val Re = "^/([a-z_]+)(?:/([a-z]+))?/([^/]+)$".r
     def unapply(path: String) = path match {
-      case Re(db, id) => Some(Database(db), to_id(id)) 
+      case Re(db, act, id) => Some(Database(db), onull(act), to_id(id))
       case _ => None
     }
-    def apply(db: Database, id: String) = "/" +  db.name + "/" + id
+    def apply(db: Database, act: Option[String], id: String) = 
+      "/" + (db.name :: act.toList ::: id :: Nil).mkString("/")
   }
   object Index {
     val Re =  "^/([a-z_]+)/?$".r
@@ -59,7 +60,7 @@ object App {
   
   def app(implicit request: Request[Stream]) =
     request match {
-      case Path(DbId(db, id)) =>
+      case Path(DbId(db, act, id)) =>
         val couched = db( (couch /: request.headers) {
           case (c, (k, v)) if k.asString == IfNoneMatch.asString =>
             c << (k.asString, v.mkString.replace("-gzip","")) // gross: https://issues.apache.org/bugzilla/show_bug.cgi?id=39727
@@ -82,7 +83,7 @@ object App {
           case (NotFound.toInt, _, _) => None 
         }
 
-      case Path(Index(db)) => Some(redirect(DbId(db, db(couch).all_docs.first)))
+      case Path(Index(db)) => Some(redirect(DbId(db, None, db(couch).all_docs.first)))
       case _ => None
     }
 
