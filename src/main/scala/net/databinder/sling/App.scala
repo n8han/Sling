@@ -31,7 +31,7 @@ object App {
   implicit val charSet = UTF8
   def content_type = "text/html; charset=UTF-8"
   
-  object Id {
+  object DbId {
     def to_path(id: String) = id.replaceAll(" ", "_")
     def to_id(web: String) = web.replaceAll("_", " ")
     val Re = "^/([a-z_]+)/([^/]+)$".r
@@ -59,7 +59,7 @@ object App {
   
   def app(implicit request: Request[Stream]) =
     request match {
-      case Path(Id(db, id)) =>
+      case Path(DbId(db, id)) =>
         val couched = db( (couch /: request.headers) {
           case (c, (k, v)) if k.asString == IfNoneMatch.asString =>
             c << (k.asString, v.mkString.replace("-gzip","")) // gross: https://issues.apache.org/bugzilla/show_bug.cgi?id=39727
@@ -82,7 +82,7 @@ object App {
           case (NotFound.toInt, _, _) => None 
         }
 
-      case Path(Index(db)) => Some(redirect(Id(db, db(couch).all_docs.first)))
+      case Path(Index(db)) => Some(redirect(DbId(db, db(couch).all_docs.first)))
       case _ => None
     }
 
@@ -111,7 +111,7 @@ object App {
         db map { _.all_docs map {
           case "style.css" => ""
           case `curr_id` => <li> { curr_id } </li>
-          case id => <li> <a href={ Id.to_path(id) }>{ id }</a> </li> 
+          case id => <li> <a href={ DbId.to_path(id) }>{ id }</a> </li> 
         } } getOrElse ""
       }
     </ul>
