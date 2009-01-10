@@ -69,12 +69,19 @@ object App {
         
         couched(id) {
           case (OK.toInt, ri, Some(entity)) =>
-            id match {
-              case "style.css" =>
+            (act, id) match {
+              case (_, "style.css") =>
                 Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8")) << 
                   new Store(entity.getContent())(PageDoc.body).mkString("").toList
                 )
-              case id =>
+              case (Some("edit"), id) =>
+                Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
+                  Some(couched), id, 
+                    <textarea>{
+                      new Store(entity.getContent())(PageDoc.body).mkString("")
+                    }</textarea>
+                ))
+              case (_, id) =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
                   Some(couched), id, md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
                 ))
