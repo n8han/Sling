@@ -1,5 +1,7 @@
 package net.databinder.sling
 
+import scala.xml.{Unparsed, Elem}
+
 import slinky.http.servlet.StreamStreamServletApplication
 import slinky.http.servlet.StreamStreamServletApplication.resourceOr
 import slinky.http.{ContentType, Date, CacheControl}
@@ -13,6 +15,7 @@ import scalaz.CharSet.UTF8
 
 import net.databinder.dispatch._
 import org.apache.http.HttpResponse
+import org.apache.http.util.EntityUtils
 
 final class App extends StreamStreamServletApplication {
   import App._
@@ -51,7 +54,7 @@ object App {
   }
   
   val showdown = new js.showdown()
-  def md2html(md: String) = scala.xml.Unparsed(showdown.makeHtml(md).toString)
+  def md2html(md: String) = Unparsed(showdown.makeHtml(md).toString)
   
   def couch = Couch()
   
@@ -78,14 +81,25 @@ object App {
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
                   Some(couched), id,
                     <link rel="stylesheet" href="/css/edit.css" type="text/css" media="screen" /> 
-                  ,                  
+                    <script type="text/javascript" src="http://localhost:5984/_utils/script/couch.js"></script>
+                  ,
                     <div id="edit">
-                      <textarea>{
-                        new Store(entity.getContent())(PageDoc.body).mkString("")
-                      }</textarea>
-                      <script type="text/javascript" src="/js/wmd/wmd.js"></script>
+                      <form name="doc" action="http://localhost:5984/friday/Processing" method="put">
+                        <div><textarea name="body"></textarea></div>
+                        <input type="hidden" name="_rev" />
+                        <input type="hidden" name="_id" />
+                        <div><input type="submit" value="Save Changes" /></div>
+                      </form>
                     </div>
                     <div class="wmd-preview"></div>
+                    <script type="text/javascript"> 
+                      { Unparsed("var doc = " + EntityUtils.toString(entity, UTF8) + """
+                        var doc_form = document.forms.doc;
+                        doc_form.body.value = doc.body;
+                        doc_form._rev.value = doc._rev;
+                        doc_form._id.value = doc._id;""") }
+                    </script>
+                    <script type="text/javascript" src="/js/wmd/wmd.js"></script>
                 ))
               case (_, id) =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
@@ -100,7 +114,7 @@ object App {
       case _ => None
     }
 
-  def doc[A, B](db: Option[Database#H], curr_id: String, body: B): xml.Elem = doc(db, curr_id, Nil, body)
+  def doc[A, B](db: Option[Database#H], curr_id: String, body: B): Elem = doc(db, curr_id, Nil, body)
   def doc[A, B](db: Option[Database#H], curr_id: String, head: A, body: B) = {
     val title = db.map(d => d.name.capitalize + " → ").mkString + curr_id
     <html xmlns="http://www.w3.org/1999/xhtml">
@@ -114,21 +128,18 @@ object App {
       <body>
         <div class="container">
           <h2>{ title }</h2>
-          <h4>{ menu(db, curr_id) }</h4>
+          <h4><ul>
+            {
+              db map { _.all_docs map {
+                case "style.css" => Nil
+                case `curr_id` => <li> { curr_id } </li>
+                case id => <li> <a href={ DbId.to_path(id) }>{ id }</a> </li> 
+              } } getOrElse Nil
+            }
+          </ul></h4>
           { body }
         </div>
       </body>
     </html>
   }
-  
-  def menu(db: Option[Database#H], curr_id: String) =
-    <ul>
-      {
-        db map { _.all_docs map {
-          case "style.css" => Nil
-          case `curr_id` => <li> { curr_id } </li>
-          case id => <li> <a href={ DbId.to_path(id) }>{ id }</a> </li> 
-        } } getOrElse Nil
-      }
-    </ul>
 }
