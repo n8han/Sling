@@ -81,23 +81,32 @@ object App {
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
                   Some(couched), id,
                     <link rel="stylesheet" href="/css/edit.css" type="text/css" media="screen" /> 
-                    <script type="text/javascript" src="http://localhost:5984/_utils/script/couch.js"></script>
+                    <script type="text/javascript" src="http://localhost:5984/_utils/script/jquery.js"></script>
                   ,
                     <div id="edit">
-                      <form name="doc" action="http://localhost:5984/friday/Processing" method="put">
-                        <div><textarea name="body"></textarea></div>
-                        <input type="hidden" name="_rev" />
-                        <input type="hidden" name="_id" />
+                      <form id="form">
+                        <div><textarea id="body" name="body"></textarea></div>
                         <div><input type="submit" value="Save Changes" /></div>
                       </form>
                     </div>
                     <div class="wmd-preview"></div>
                     <script type="text/javascript"> 
                       { Unparsed("var doc = " + EntityUtils.toString(entity, UTF8) + """
-                        var doc_form = document.forms.doc;
-                        doc_form.body.value = doc.body;
-                        doc_form._rev.value = doc._rev;
-                        doc_form._id.value = doc._id;""") }
+                        $('#body').val(doc.body)
+                        $('#form').submit( function() {
+                          doc.body = $('#body').val()
+                          $.ajax({
+                            type: 'PUT',
+                            url: 'http://127.0.0.1:5984/friday/About',
+                            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                              alert('Fail: ' + errorThrown);
+                            },
+                            success: function(req) {
+                              if (req.status != 200) { alert('Unable to save:' + resp.status); }
+                            }
+                          });
+                          return false;
+                        } );""") }
                     </script>
                     <script type="text/javascript" src="/js/wmd/wmd.js"></script>
                 ))
