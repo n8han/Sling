@@ -85,11 +85,14 @@ object App {
                     <script type="text/javascript" src="/script/json2.js"></script>
                   ,
                     <div id="edit">
-                      <form id="form">
-                        <div><textarea id="body" name="body"></textarea></div>
-                        <div><input type="submit" value="Save Changes" /></div>
-                      </form>
+                      <div class="container">
+                        <form id="form">
+                          <div><textarea id="body" name="body"></textarea></div>
+                          <div><input type="submit" value="Save Changes" /></div>
+                        </form>
+                      </div>
                     </div>
+                  ,
                     <div class="wmd-preview"></div>
                     <script type="text/javascript"> 
                       { Unparsed("var doc = " + EntityUtils.toString(entity, UTF8) + """
@@ -127,8 +130,8 @@ object App {
       case _ => None
     }
 
-  def doc[A, B](db: Option[Database#H], curr_id: String, body: B): Elem = doc(db, curr_id, Nil, body)
-  def doc[A, B](db: Option[Database#H], curr_id: String, head: A, body: B) = {
+  def doc[A, B](db: Option[Database#H], curr_id: String, body: B): Elem = doc(db, curr_id, Nil, Nil, body)
+  def doc[A, B, C](db: Option[Database#H], curr_id: String, head: A, top: B, body: C) = {
     val title = db.map(d => d.name.capitalize + " → ").mkString + curr_id
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
@@ -139,6 +142,7 @@ object App {
         { head }
       </head>
       <body>
+        { top }
         <div class="container">
           <h2>{ title }</h2>
           <h4><ul>
