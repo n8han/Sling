@@ -81,7 +81,8 @@ object App {
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
                   Some(couched), id,
                     <link rel="stylesheet" href="/css/edit.css" type="text/css" media="screen" /> 
-                    <script type="text/javascript" src="http://localhost:5984/_utils/script/jquery.js"></script>
+                    <script type="text/javascript" src="/script/jquery.js"></script>
+                    <script type="text/javascript" src="/script/json2.js"></script>
                   ,
                     <div id="edit">
                       <form id="form">
@@ -95,16 +96,19 @@ object App {
                         $('#body').val(doc.body)
                         $('#form').submit( function() {
                           doc.body = $('#body').val()
-                          $.ajax({
+                          $.ajax( {
                             type: 'PUT',
-                            url: 'http://127.0.0.1:5984/friday/About',
+                            url: '/couch""" + DbId(db, None, id) +  """',
+                            dataType: 'json', 
+                            data: JSON.stringify(doc),
                             error: function(XMLHttpRequest, textStatus, errorThrown) {
-                              alert('Fail: ' + errorThrown);
+                              alert('Save failed: ' + textStatus);
                             },
-                            success: function(req) {
-                              if (req.status != 200) { alert('Unable to save:' + resp.status); }
+                            complete: function(req) {
+                              var resp = $.httpData(req, 'json')
+                              doc._rev = resp.rev;
                             }
-                          });
+                          } )
                           return false;
                         } );""") }
                     </script>
