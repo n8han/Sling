@@ -50,7 +50,7 @@ object App {
     }
   }
   
-  val showdown = new js.Showdown()
+  val showdown = new js.showdown()
   def md2html(md: String) = scala.xml.Unparsed(showdown.makeHtml(md).toString)
   
   def couch = Couch()
