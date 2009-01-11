@@ -63,5 +63,5 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
       ).getBytes
       None
     }
-  }
+  } dependsOn prepareWebapp
 }
