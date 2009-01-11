@@ -76,10 +76,16 @@ object App {
                 )
               case (Some("edit"), id) =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
-                  Some(couched), id, 
-                    <textarea>{
-                      new Store(entity.getContent())(PageDoc.body).mkString("")
-                    }</textarea>
+                  Some(couched), id,
+                    <link rel="stylesheet" href="/css/edit.css" type="text/css" media="screen" /> 
+                  ,                  
+                    <div id="edit">
+                      <textarea>{
+                        new Store(entity.getContent())(PageDoc.body).mkString("")
+                      }</textarea>
+                      <script type="text/javascript" src="/js/wmd/wmd.js"></script>
+                    </div>
+                    <div class="wmd-preview"></div>
                 ))
               case (_, id) =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
@@ -94,14 +100,16 @@ object App {
       case _ => None
     }
 
-  def doc[A](db: Option[Database#H], curr_id: String, body: A) = {
+  def doc[A, B](db: Option[Database#H], curr_id: String, body: B): xml.Elem = doc(db, curr_id, Nil, body)
+  def doc[A, B](db: Option[Database#H], curr_id: String, head: A, body: B) = {
     val title = db.map(d => d.name.capitalize + " → ").mkString + curr_id
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
         <title>{ title }</title>
-        <link rel="stylesheet" href="/blueprint/screen.css" type="text/css" media="screen, projection" />
-        <link rel="stylesheet" href="/blueprint/print.css" type="text/css" media="print" /> 
+        <link rel="stylesheet" href="/css/blueprint/screen.css" type="text/css" media="screen, projection" />
+        <link rel="stylesheet" href="/css/blueprint/print.css" type="text/css" media="print" /> 
         <link rel="stylesheet" href="style.css" type="text/css" media="screen, projection" /> 
+        { head }
       </head>
       <body>
         <div class="container">
@@ -117,10 +125,10 @@ object App {
     <ul>
       {
         db map { _.all_docs map {
-          case "style.css" => ""
+          case "style.css" => Nil
           case `curr_id` => <li> { curr_id } </li>
           case id => <li> <a href={ DbId.to_path(id) }>{ id }</a> </li> 
-        } } getOrElse ""
+        } } getOrElse Nil
       }
     </ul>
 }
