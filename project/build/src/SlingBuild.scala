@@ -29,7 +29,7 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
     </dependencies>
 
   
-  lazy val wmd = taskProduceSimple(wmd_src) {
+  lazy val wmd = fileTask(wmd_src :: Nil) {
     import FileUtilities._ 
     val toAppend = "\nfunction makeHtml(md) { return new Showdown.converter().makeHtml('' + md) }" 
     val url = new URL("http://wmd-editor.com/downloads/wmd-1.0.1.zip")
@@ -39,7 +39,7 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
         append(showdown_js.asFile, toAppend, log)
   }
 
-  lazy val showdown = fileTaskSimple(Map(js_classpath -> (showdown_js :: Nil))) {
+  lazy val showdown = fileTask(js_classpath from showdown_js) {
     FileUtilities.createDirectory(js_classpath, log) orElse {
       Run.run(
         "org.mozilla.javascript.tools.jsc.Main",
