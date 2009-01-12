@@ -84,14 +84,14 @@ object App {
                     <script type="text/javascript" src="/script/jquery.js"></script>
                     <script type="text/javascript" src="/script/json2.js"></script>
                   ,
-                    <div id="edit">
+                    <div id="edit"><div>
                       <div class="container">
                         <form id="form">
                           <div><textarea id="body" name="body"></textarea></div>
                           <div><input type="submit" value="Save Changes" /></div>
                         </form>
                       </div>
-                    </div>
+                    </div></div>
                   ,
                     <div class="wmd-preview"></div>
                     <script type="text/javascript"> 
@@ -143,18 +143,20 @@ object App {
       </head>
       <body>
         { top }
-        <div class="container">
-          <h2>{ title }</h2>
-          <h4><ul>
-            {
-              db map { _.all_docs map {
-                case "style.css" => Nil
-                case `curr_id` => <li> { curr_id } </li>
-                case id => <li> <a href={ DbId.to_path(id) }>{ id }</a> </li> 
-              } } getOrElse Nil
-            }
-          </ul></h4>
-          { body }
+        <div id="content">
+          <div class="container">
+            <h2>{ title }</h2>
+            <h4><ul>
+              {
+                db map { _.all_docs map {
+                  case "style.css" => Nil
+                  case `curr_id` => <li> { curr_id } </li>
+                  case id => <li> <a href={ DbId.to_path(id) }>{ id }</a> </li> 
+                } } getOrElse Nil
+              }
+            </ul></h4>
+            { body }
+          </div>
         </div>
       </body>
     </html>

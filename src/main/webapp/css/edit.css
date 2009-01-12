@@ -1,14 +1,21 @@
 body {
-  padding-top: 300px;
+	padding-top: 300px;
 }
+
 textarea {
-  width: 450px;
-  height: 200px;
+	width: 450px;
+	height: 200px;
 }
+
+div#edit >div {
+	background: black url(rad.gif);
+	height: 300px;
+	padding-bottom: 10px;
+}
+
 div#edit {
-  background: black;
-  position: fixed;
-  top: 0px;
-  width: 100%;
-  padding-bottom: 10px;
+	top: 0px;
+	width: 100%;
+	position: fixed;
+	border-bottom: 5px black dashed;
 }
