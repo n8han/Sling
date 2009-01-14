@@ -6,7 +6,7 @@ import java.net.URL
 class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
 {
   val js_classpath = outputPath / "js_classes"
-  val js_src = path("src_managed") / "main" / "js"
+  val js_src = (path("src_managed") / "main" ##) / "js"
   val wmd_src = js_src / "wmd"
   val showdown_js = wmd_src / "showdown.js"
 
@@ -44,16 +44,16 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
       Run.run(
         "org.mozilla.javascript.tools.jsc.Main",
         descendents(managedDependencyPath, "js-*.jar").get,
-        "-d" :: js_classpath.toString :: "-package" :: "js" :: "-extends" :: "java.lang.Object" :: showdown_js.toString :: Nil,
+        "-d" :: js_classpath.toString :: "-package" :: "js" :: "-extends" :: "java.lang.Object" ::
+          showdown_js.asFile.toString :: Nil,
         log
       )
     }
   } dependsOn wmd
   
   override def compileAction = super.compileAction dependsOn(showdown)
-  override def prepareWebappAction = super.prepareWebappAction && task {
-    FileUtilities.copy(((js_src ##) ** ("*")).get, temporaryWarPath / "js", log).left.toOption
-  }
+  override def extraWebappFiles = js_src ** ("*")
+
   lazy val script = task {
     FileUtilities.writeStream((info.projectPath / "run.sh").asFile, log) { out =>
       out write (
