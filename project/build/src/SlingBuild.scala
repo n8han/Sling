@@ -34,9 +34,10 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
     val toAppend = "\nfunction makeHtml(md) { return new Showdown.converter().makeHtml('' + md) }" 
     val url = new URL("http://wmd-editor.com/downloads/wmd-1.0.1.zip")
     val wmd_zip = outputPath / "wmd_zip"
-    unzip(url, wmd_zip, "wmd-*/wmd/**", log).left.toOption orElse 
-      ((None: Option[String]) /: (wmd_zip ** "wmd").get)( (e, d) => e orElse copyDirectory(d, wmd_src, log)) orElse
-        append(showdown_js.asFile, toAppend, log)
+    unzip(url, wmd_zip, "wmd-*/wmd/**", log).left.toOption orElse {
+      val files = (wmd_zip ** "wmd" ##) ** "*"
+      copy(files.get, wmd_src, log).left.toOption
+    } orElse append(showdown_js.asFile, toAppend, log)
   }
 
   lazy val showdown = fileTask(js_classpath from showdown_js) {
@@ -55,13 +56,10 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
   override def extraWebappFiles = js_src ** ("*")
 
   lazy val script = task {
-    FileUtilities.writeStream((info.projectPath / "run.sh").asFile, log) { out =>
-      out write (
-        "#! /bin/sh\n\nnohup $JAVA_HOME/bin/java -cp " + 
-        runClasspath.get.mkString(":") + 
-        " $JAVA_OPTIONS " + mainClass.mkString + " >/dev/null &\\echo $! > run.pid\n"
-      ).getBytes
-      None
-    }
+    FileUtilities.write((info.projectPath / "run.sh").asFile,
+      "#! /bin/sh\n\nnohup $JAVA_HOME/bin/java -cp " + 
+      runClasspath.get.mkString(":") + 
+      " $JAVA_OPTIONS " + mainClass.mkString + " >/dev/null &\\echo $! > run.pid\n"
+    , log)
   } dependsOn prepareWebapp
 }
