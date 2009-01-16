@@ -1,21 +1,20 @@
-body {
-	padding-top: 300px;
-}
+/* @override http://technically.us/css/edit.css */
 
 textarea {
 	width: 450px;
 	height: 200px;
 }
 
-div#edit >div {
-	background: black url(rad.gif);
-	height: 300px;
-	padding-bottom: 10px;
-}
-
 div#edit {
 	top: 0px;
+	height: 300px;
+}
+
+div#edit > div {
 	width: 100%;
 	position: fixed;
-	border-bottom: 5px black dashed;
+	background: black url(rad.gif);
+	padding-bottom: 10px;
+	border-bottom: 5px white dashed;
 }
+

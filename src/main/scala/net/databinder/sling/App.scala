@@ -82,9 +82,10 @@ object App {
                   Some(couched), id,
                     <link rel="stylesheet" href="/css/edit.css" type="text/css" media="screen" /> 
                     <script type="text/javascript" src="/script/jquery.js"></script>
+                    <script type="text/javascript" src="/script/jquery.resizer.js"></script>
                     <script type="text/javascript" src="/script/json2.js"></script>
                   ,
-                    <div id="edit"><div>
+                    <div id="edit"><div id="fixed">
                       <div class="container">
                         <form id="form">
                           <div><textarea id="body" name="body"></textarea></div>
@@ -92,11 +93,20 @@ object App {
                         </form>
                       </div>
                     </div></div>
+                    <div><a href="#" id="shade">PULL</a></div>
                   ,
                     <div class="wmd-preview"></div>
                     <script type="text/javascript"> 
                       { Unparsed("var doc = " + EntityUtils.toString(entity, UTF8) + """
                         $('#body').val(doc.body)
+                        $('#edit').makeResizable({
+                          vertical: true,
+                          grippie: $('#shade')
+                        })
+                        $('#fixed').makeResizable({
+                          vertical: true,
+                          grippie: $('#shade')
+                        })
                         $('#form').submit( function() {
                           doc.body = $('#body').val()
                           $.ajax( {
