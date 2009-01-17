@@ -1,20 +1,29 @@
-/* @override http://technically.us/css/edit.css */
-
 textarea {
 	width: 450px;
-	height: 200px;
+	height: 220px;
 }
 
 div#edit {
 	top: 0px;
-	height: 300px;
+	height: 280px;
 }
 
-div#edit > div {
+div#fixed {
+	height: 280px;
 	width: 100%;
 	position: fixed;
-	background: black url(rad.gif);
-	padding-bottom: 10px;
-	border-bottom: 5px white dashed;
+	border-bottom: 5px black dashed;
 }
 
+div#fixed > div {
+	height: 280px;
+	background: black url(rad.gif);
+}
+
+#shade {
+	position: fixed;
+	top: 0px;
+	right: 25px;
+	padding: 25px;
+	cursor: pointer;
+}

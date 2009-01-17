@@ -84,29 +84,38 @@ object App {
                     <script type="text/javascript" src="/script/jquery.js"></script>
                     <script type="text/javascript" src="/script/jquery.resizer.js"></script>
                     <script type="text/javascript" src="/script/json2.js"></script>
+                    <script type="text/javascript" src="/js/wmd/showdown.js"></script>
                   ,
-                    <div id="edit"><div id="fixed">
+                    <div id="edit"><div id="fixed"><div>
                       <div class="container">
                         <form id="form">
                           <div><textarea id="body" name="body"></textarea></div>
                           <div><input type="submit" value="Save Changes" /></div>
                         </form>
                       </div>
-                    </div></div>
-                    <div><a href="#" id="shade">PULL</a></div>
+                    </div></div></div>
+                    <img id="shade" title="Toggle Editor" src="/css/ship-left.gif" />
                   ,
-                    <div class="wmd-preview"></div>
+                    <div id="body-preview"></div>
                     <script type="text/javascript"> 
                       { Unparsed("var doc = " + EntityUtils.toString(entity, UTF8) + """
-                        $('#body').val(doc.body)
-                        $('#edit').makeResizable({
-                          vertical: true,
-                          grippie: $('#shade')
-                        })
-                        $('#fixed').makeResizable({
-                          vertical: true,
-                          grippie: $('#shade')
-                        })
+                        $('#body').val(doc.body);
+                        $('#body-preview').html(makeHtml(doc.body));
+                        $('#body').keypress(function() {
+                          $('#body-preview').html(makeHtml($(this).val()));
+                        });
+                        $('#shade').click(function() {
+                          if ($('#edit').is(':hidden')) {
+                            $('#edit, #fixed').slideDown(function() {
+                              $('#shade').attr('src', '/css/ship-left.gif');
+                            });
+                          }
+                          else {
+                            $('#edit, #fixed').slideUp(function() {
+                              $('#shade').attr('src', '/css/ship-up.gif');
+                            });
+                          }
+                        });
                         $('#form').submit( function() {
                           doc.body = $('#body').val()
                           $.ajax( {
@@ -125,7 +134,6 @@ object App {
                           return false;
                         } );""") }
                     </script>
-                    <script type="text/javascript" src="/js/wmd/wmd.js"></script>
                 ))
               case (_, id) =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
