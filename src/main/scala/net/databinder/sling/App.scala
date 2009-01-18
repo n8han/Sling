@@ -82,7 +82,6 @@ object App {
                   Some(couched), id,
                     <link rel="stylesheet" href="/css/edit.css" type="text/css" media="screen" /> 
                     <script type="text/javascript" src="/script/jquery.js"></script>
-                    <script type="text/javascript" src="/script/jquery.resizer.js"></script>
                     <script type="text/javascript" src="/script/json2.js"></script>
                     <script type="text/javascript" src="/js/wmd/showdown.js"></script>
                     <script type="text/javascript" src="/js/edit.js"></script>
@@ -101,7 +100,7 @@ object App {
                         </form>
                       </div>
                     </div></div></div>
-                    <img id="shade" title="Toggle Editor" src="/css/ship-left.gif" />
+                    <img id="shade" title="Toggle Editor" src="/css/ship-up.gif" />
                   ,
                     <div id="body-preview"></div>
                 ))
