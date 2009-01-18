@@ -1,7 +1,7 @@
 $(document).ready(function() {
   $('#body').val(doc.body);
   $('#body-preview').html(makeHtml(doc.body));
-  $('#body').keypress(function() {
+  $('#body').keyup(function() {
     $('#body-preview').html(makeHtml($(this).val()));
   });
   $('#shade').click(function() {
