@@ -37,13 +37,13 @@ object App {
   object DbId {
     def to_path(id: String) = id.replaceAll(" ", "_")
     def to_id(web: String) = web.replaceAll("_", " ")
-    val Re = "^/([a-z_]+)(?:/([a-z]+))?/([^/]+)$".r
+    val Re = "^/([a-z_]+)/([^/]+)$".r
     def unapply(path: String) = path match {
-      case Re(db, act, id) => Some(Database(db), onull(act), to_id(id))
+      case Re(db, id) => Some(Database(db), to_id(id))
       case _ => None
     }
-    def apply(db: Database, act: Option[String], id: String) = 
-      "/" + (db.name :: act.toList ::: id :: Nil).mkString("/")
+    def apply(db: Database, id: String) = 
+      "/" + (db.name :: id :: Nil).mkString("/")
   }
   object Index {
     val Re =  "^/([a-z_]+)/?$".r
@@ -63,7 +63,7 @@ object App {
   
   def app(implicit request: Request[Stream]) =
     request match {
-      case Path(DbId(db, act, id)) =>
+      case Path(DbId(db, id)) =>
         val couched = db( (couch /: request.headers) {
           case (c, (k, v)) if k.asString == IfNoneMatch.asString =>
             c << (k.asString, v.mkString.replace("-gzip","")) // gross: https://issues.apache.org/bugzilla/show_bug.cgi?id=39727
@@ -72,12 +72,12 @@ object App {
         
         couched(id) {
           case (OK.toInt, ri, Some(entity)) =>
-            (act, id) match {
-              case (_, "style.css") =>
+            id match {
+              case ("style.css") =>
                 Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8")) << 
                   new Store(entity.getContent())(PageDoc.body).mkString("").toList
                 )
-              case (Some("edit"), id) =>
+              case (id) if request !? "edit" =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
                   Some(couched), id,
                     <link rel="stylesheet" href="/css/edit.css" type="text/css" media="screen" /> 
@@ -88,7 +88,7 @@ object App {
                     <script type="text/javascript"> 
                       { Unparsed(
                           "var doc = " + EntityUtils.toString(entity, UTF8) + ";" +
-                          "var doc_url = '/couch" + DbId(db, None, id) + "';"
+                          "var doc_url = '/couch" + DbId(db, id) + "';"
                       ) }
                     </script>
                   ,
@@ -103,8 +103,9 @@ object App {
                     <img id="shade" title="Toggle Editor" src="/css/ship-up.gif" />
                   ,
                     <div id="body-preview"></div>
+                  , "?edit"
                 ))
-              case (_, id) =>
+              case (id) =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
                   Some(couched), id, md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
                 ))
@@ -113,13 +114,13 @@ object App {
           case (NotFound.toInt, _, _) => None 
         }
 
-      case Path(Index(db)) => Some(redirect(DbId(db, None, db(couch).all_docs.first)))
+      case Path(Index(db)) => Some(redirect(DbId(db, db(couch).all_docs.first)))
       case _ => None
     }
 
-  def doc[A, B](db: Option[Database#H], curr_id: String, body: B): Elem = doc(db, curr_id, Nil, Nil, body)
-  def doc[A, B, C](db: Option[Database#H], curr_id: String, head: A, top: B, body: C) = {
-    val title = db.map(d => d.name.capitalize + " → ").mkString + curr_id
+  def doc[A, B](db: Option[Database#H], curr_id: String, body: B): Elem = doc(db, curr_id, Nil, Nil, body, "")
+  def doc[A, B, C](db: Option[Database#H], curr_id: String, head: A, top: B, body: C, query: String) = {
+    val title = db.map(d => d.name.capitalize + " → ").mkString + curr_id
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
         <title>{ title }</title>
@@ -135,10 +136,10 @@ object App {
             <h2>{ title }</h2>
             <h4><ul>
               {
-                db map { _.all_docs map {
+                db map { d => d.all_docs map {
                   case "style.css" => Nil
                   case `curr_id` => <li> { curr_id } </li>
-                  case id => <li> <a href={ DbId.to_path(id) }>{ id }</a> </li> 
+                  case id => <li> <a href={ DbId(d, id) + query }>{ id }</a> </li> 
                 } } getOrElse Nil
               }
             </ul></h4>
