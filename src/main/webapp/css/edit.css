@@ -4,11 +4,13 @@ textarea {
 }
 
 div#edit {
+	display: none;
 	top: 0px;
 	height: 280px;
 }
 
 div#fixed {
+	display: none;
 	height: 280px;
 	width: 100%;
 	position: fixed;

@@ -17,7 +17,7 @@ $(document).ready(function() {
     }
   });
   $('#form').submit(function() {
-    doc.body = $('#body').val()
+    doc.body = $('#body').val();
     $.ajax( {
       type: 'PUT',
       url: doc_url,
@@ -30,7 +30,8 @@ $(document).ready(function() {
         var resp = $.httpData(req, 'json')
         doc._rev = resp.rev;
       }
-    } )
+    } );
+    $('#shade').click();
     return false;
   } );
 });
