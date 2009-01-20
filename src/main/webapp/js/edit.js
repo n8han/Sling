@@ -27,8 +27,7 @@ $(document).ready(function() {
         alert('Save failed: ' + textStatus);
       },
       complete: function(req) {
-        var resp = $.httpData(req, 'json')
-        doc._rev = resp.rev;
+        doc._rev = $.httpData(req, 'json').rev;
       }
     } );
     $('#shade').click();
