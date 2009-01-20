@@ -10,7 +10,6 @@ import slinky.http.request.Request.Stream.{MethodPath, Path}
 import slinky.http.request.{Request, GET, IfNoneMatch, RequestHeader}
 import slinky.http.response.{Response, OK, NotFound, ETag, NotModified}
 import slinky.http.response.xhtml.Doctype.strict
-import scalaz.OptionW.onull
 import scalaz.CharSet.UTF8
 
 import net.databinder.dispatch._
