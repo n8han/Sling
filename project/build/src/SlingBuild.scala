@@ -1,7 +1,4 @@
 import sbt._
-import java.util.zip.ZipInputStream
-import java.io.FileOutputStream
-import java.net.URL
 
 class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
 {
@@ -32,7 +29,7 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
   lazy val wmd = fileTask(wmd_src :: Nil) {
     import FileUtilities._ 
     val toAppend = "\nfunction makeHtml(md) { return new Showdown.converter().makeHtml('' + md) }" 
-    val url = new URL("http://wmd-editor.com/downloads/wmd-1.0.1.zip")
+    val url = new java.net.URL("http://wmd-editor.com/downloads/wmd-1.0.1.zip")
     val wmd_zip = outputPath / "wmd_zip"
     unzip(url, wmd_zip, "wmd-*/wmd/**", log).left.toOption orElse {
       val files = (wmd_zip ** "wmd" ##) ** "*"
