@@ -54,9 +54,9 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
 
   lazy val script = task {
     FileUtilities.write((info.projectPath / "run.sh").asFile,
-      "#! /bin/sh\n\nnohup $JAVA_HOME/bin/java -cp " + 
-      runClasspath.get.mkString(":") + 
-      " $JAVA_OPTIONS " + mainClass.mkString + " >/dev/null &\\echo $! > run.pid\n"
+      "#! /bin/sh\n\n$JAVA_HOME/bin/java -cp " + 
+      Path.makeString(runClasspath.get) + 
+      " $JAVA_OPTIONS " + mainClass.mkString + "\n"
     , log)
   } dependsOn prepareWebapp
 }
