@@ -55,7 +55,7 @@ object App {
   val showdown = new js.showdown()
   def md2html(md: String) = Unparsed(showdown.makeHtml(md).toString)
   
-  def couch = Couch()
+  def couch = Couch(System.getProperty("couch.host","127.0.0.1"))
   
   def cache_heds(ri: HttpResponse, ro: Response[Stream]) = 
     ro(Date, ri.getFirstHeader(Date).getValue)(CacheControl, "max-age=600")(ETag, ri.getFirstHeader(ETag).getValue)
