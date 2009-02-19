@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(function() {
   $('#body').val(doc.body);
   $('#body-preview').html(makeHtml(doc.body));
   $('#body').keyup(function() {
