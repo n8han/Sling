@@ -13,6 +13,7 @@ import slinky.http.response.xhtml.Doctype.strict
 import scalaz.CharSet.UTF8
 
 import net.databinder.dispatch._
+import net.databinder.dispatch.couch._
 import org.apache.http.HttpResponse
 import org.apache.http.util.EntityUtils
 
@@ -25,8 +26,8 @@ final class App extends StreamStreamServletApplication {
     })
 }
 
-object PageDoc extends Doc {
-  val body = String('body)
+case class PageDoc(js: Js) extends Doc {
+  val body = 'body as str
 }
 
 object App {
@@ -74,7 +75,7 @@ object App {
             id match {
               case ("style.css") =>
                 Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8")) << 
-                  new Store(entity.getContent())(PageDoc.body).mkString("").toList
+                  PageDoc(Js(entity.getContent())).body.toList
                 )
               case (id) if request !? "edit" =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
@@ -106,7 +107,7 @@ object App {
                 ))
               case (id) =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
-                  Some(couched), id, md2html(new Store(entity.getContent())(PageDoc.body).mkString(""))
+                  Some(couched), id, md2html(PageDoc(Js(entity.getContent())).body)
                 ))
             }
           case (NotModified.toInt, ri, _) => Some(cache_heds(ri, NotModified))
