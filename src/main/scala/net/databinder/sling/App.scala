@@ -26,7 +26,7 @@ final class App extends StreamStreamServletApplication {
     })
 }
 
-case class PageDoc(js: Js) extends Doc {
+object PageDoc extends Doc {
   val body = 'body as str
 }
 
@@ -75,7 +75,7 @@ object App {
             id match {
               case ("style.css") =>
                 Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8")) << 
-                  PageDoc(Js(entity.getContent())).body.toList
+                  Js(entity.getContent())(PageDoc.body).toList
                 )
               case (id) if request !? "edit" =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
@@ -107,7 +107,7 @@ object App {
                 ))
               case (id) =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
-                  Some(couched), id, md2html(PageDoc(Js(entity.getContent())).body)
+                  Some(couched), id, md2html(Js(entity.getContent())(PageDoc.body))
                 ))
             }
           case (NotModified.toInt, ri, _) => Some(cache_heds(ri, NotModified))
