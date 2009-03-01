@@ -8,7 +8,7 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
   val showdown_js = wmd_src / "showdown.js"
 
   override def mainClass = Some("net.databinder.sling.Server")
-  override def unmanagedClasspath = super.unmanagedClasspath +++ js_classpath
+  override def unmanagedClasspath(cfg: Configuration) = super.unmanagedClasspath(cfg) +++ js_classpath
   
   val snapshots = "Databinder Snapshots" at "http://databinder.net/snapshot/"
   val scala_tools = "Scala Tools Releases" at "http://scala-tools.org/repo-releases"
