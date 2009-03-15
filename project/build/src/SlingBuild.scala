@@ -2,6 +2,8 @@ import sbt._
 
 class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
 {
+  val lag_net = "lag.net repository" at "http://www.lag.net/repo"
+
   val js_classpath = outputPath / "js_classes"
   val js_src = (path("src_managed") / "main" ##) / "js"
   val wmd_src = js_src / "wmd"
@@ -10,8 +12,6 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
   override def mainClass = Some("net.databinder.sling.Server")
   override def unmanagedClasspath = super.unmanagedClasspath +++ js_classpath
   
-  val scala_tools = "Scala Tools Releases" at "http://scala-tools.org/repo-releases"
-
   val jetty = "org.mortbay.jetty" % "jetty-ajp" % "6.1.14"
   val dispatch = "net.databinder" % "dispatch" % "0.1-SNAPSHOT"
   val rhino = "rhino" % "js" % "1.7R1"
