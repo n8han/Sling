@@ -87,13 +87,13 @@ object App {
                 )
               case (id) if request !? "edit" =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << 
-                  Page(EditDocument(couched, id, 
+                  Page(EditDocument(TOC(couched, id, "?edit"), 
                     EntityUtils.toString(entity, UTF8)
                   )).html
                 )
               case (id) =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << 
-                  Page(ShowDocument(couched, id, 
+                  Page(ShowDocument(TOC(couched, id, ""), 
                     PageDoc.body(Js(entity.getContent()))
                   )).html
                 )
@@ -129,24 +129,35 @@ object App {
     def head: NodeSeq = <title> { title } </title>
   }
   
+  case class TOC(db: Database#H, curr_id: String, query: String) extends Press {
+    lazy val html = <h4><ul>
+      {
+        db.all_docs map {
+          case "style.css" => Nil
+          case `curr_id` => <li> { curr_id } </li>
+          case id => <li> <a href={ DbId(db, id) + query }>{ id }</a> </li> 
+        }
+      }
+    </ul></h4>
+  }
+
   trait Document extends TitledContent {
-    val db: Database#H
-    val curr_id: String
-    lazy val title = db.name.capitalize + " → " + curr_id
+    val toc: TOC
+    lazy val title = toc.db.name.capitalize + " → " + toc.curr_id
   }
   
-  case class ShowDocument(db: Database#H, curr_id: String, md: String) extends Document {
+  case class ShowDocument(toc: TOC, md: String) extends Document {
     def body =
       <div id="content">
         <div class="container">
           <h2>{ title }</h2>
-          { TOC(db, curr_id, "").html }
+          { toc.html }
           { Unparsed(showdown.makeHtml(md).toString) }
         </div>
       </div>
   }
   
-  case class EditDocument(db: Database#H, curr_id: String, md: String) extends Document {
+  case class EditDocument(toc: TOC, md: String) extends Document {
     override def head = super.head ++ (
       <link rel="stylesheet" href="/css/edit.css" type="text/css" media="screen" /> 
       <script type="text/javascript" src="/script/jquery.js"></script>
@@ -156,7 +167,7 @@ object App {
       <script type="text/javascript"> 
         { Unparsed(
             "var doc = " + md + ";" +
-            "var doc_url = '/couch" + DbId(db, curr_id) + "';"
+            "var doc_url = '/couch" + DbId(toc.db, toc.curr_id) + "';"
         ) }
       </script>
     )
@@ -174,22 +185,10 @@ object App {
         <div id="content">
           <div class="container">
             <img id="shade" title="Toggle Editor" src="/css/ship-up.gif" />
-            { TOC(db, curr_id, "?edit").html }
+            { toc.html }
             <div id="body-preview"></div>
           </div>
         </div>
       </div>
-  }
-  
-  case class TOC(db: Database#H, curr_id: String, query: String) extends Press {
-    val html = <h4><ul>
-      {
-        db.all_docs map {
-          case "style.css" => Nil
-          case `curr_id` => <li> { curr_id } </li>
-          case id => <li> <a href={ DbId(db, id) + query }>{ id }</a> </li> 
-        }
-      }
-    </ul></h4>
   }
 }
