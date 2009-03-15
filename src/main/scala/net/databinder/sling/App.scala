@@ -163,7 +163,7 @@ object App {
               val Search.id(id) = js
               val from_pg = "http://twitter.com/" + from
               <p>
-                <a href={ from_pg }>{ from }</a>: { text }
+                <a href={ from_pg }>{ from }</a>: { Unparsed(text) }
                 <a href={ from_pg + "/statuses/" + id }><em>{ time }</em></a>
               </p>
             }
