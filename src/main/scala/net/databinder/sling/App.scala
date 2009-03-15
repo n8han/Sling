@@ -24,7 +24,10 @@ final class App extends StreamStreamServletApplication {
   val application =
     (app(_: Request[Stream])) or (req => {
       implicit val r = req
-      NotFound(ContentType, content_type) << strict << doc(None, "Not Found", "Page not found")
+      NotFound(ContentType, content_type) << strict << Page(new TitledContent {
+        val title = "Not Found"
+        val body = <p> Page not found </p>
+      }).html
     })
 }
 
@@ -57,7 +60,6 @@ object App {
   }
   
   val showdown = new js.showdown()
-  def md2html(md: String) = Unparsed(showdown.makeHtml(md).toString)
   
   def couch = Couch(System.getProperty("couch.host","127.0.0.1"))
   
@@ -80,7 +82,7 @@ object App {
                 Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8")) << 
                   PageDoc.body(Js(entity.getContent())).toList
                 )
-              case (id) if request !? "edit" =>
+/*              case (id) if request !? "edit" =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
                   Some(couched), id,
                     <link rel="stylesheet" href="/css/edit.css" type="text/css" media="screen" /> 
@@ -107,11 +109,13 @@ object App {
                   ,
                     <div id="body-preview"></div>
                   , "?edit"
-                ))
+                ))*/
               case (id) =>
-                Some(cache_heds(ri, OK(ContentType, content_type)) << strict << doc(
-                  Some(couched), id, md2html(PageDoc.body(Js(entity.getContent())))
-                ))
+                Some(cache_heds(ri, OK(ContentType, content_type)) << strict << 
+                  Page(UserDocument(couched, id, showdown.makeHtml(
+                    PageDoc.body(Js(entity.getContent()))
+                  ).toString)).html
+                )
             }
           case (NotModified.toInt, ri, _) => Some(cache_heds(ri, NotModified))
           case (NotFound.toInt, _, _) => None 
@@ -121,35 +125,55 @@ object App {
       case _ => None
     }
 
-  def doc[A, B](db: Option[Database#H], curr_id: String, body: B): Elem = doc(db, curr_id, Nil, Nil, body, "")
-  def doc[A, B, C](db: Option[Database#H], curr_id: String, head: A, top: B, body: C, query: String) = {
-    val title = db.map(d => d.name.capitalize + " → ").mkString + curr_id
-    <html xmlns="http://www.w3.org/1999/xhtml">
-      <head>
-        <title>{ title }</title>
-        <link rel="stylesheet" href="/css/blueprint/screen.css" type="text/css" media="screen, projection" />
-        <link rel="stylesheet" href="/css/blueprint/print.css" type="text/css" media="print" /> 
-        <link rel="stylesheet" href="style.css" type="text/css" media="screen, projection" /> 
-        { head }
-      </head>
-      <body>
-        { top }
-        <div id="content">
-          <div class="container">
-            <h2>{ title }</h2>
-            <h4><ul>
-              {
-                db map { d => d.all_docs map {
-                  case "style.css" => Nil
-                  case `curr_id` => <li> { curr_id } </li>
-                  case id => <li> <a href={ DbId(d, id) + query }>{ id }</a> </li> 
-                } } getOrElse Nil
-              }
-            </ul></h4>
-            { body }
-          </div>
+  trait Press { val html: Elem }
+  
+q  case class Page(content: Content) extends Press {
+    val html =
+      <html xmlns="http://www.w3.org/1999/xhtml">
+        <head>
+          <link rel="stylesheet" href="/css/blueprint/screen.css" type="text/css" media="screen, projection" />
+          <link rel="stylesheet" href="/css/blueprint/print.css" type="text/css" media="print" /> 
+          <link rel="stylesheet" href="style.css" type="text/css" media="screen, projection" /> 
+          { content.head }
+        </head>
+        <body>
+          { content.body }
+        </body>
+      </html>
+  }
+  trait Content { val head: Elem; val body: Elem }
+  
+  trait TitledContent extends Content {
+    val title: String
+    val head = <title> { title } </title>
+  }
+  
+  trait Document extends TitledContent {
+    val db: Database#H
+    val curr_id: String
+    val title = db.name.capitalize + " → " + curr_id
+  }
+
+  case class UserDocument(db: Database#H, curr_id: String, text: String) extends Document {
+    val body =
+      <div id="content">
+        <div class="container">
+          <h2>{ title }</h2>
+          { TOC(db, curr_id) }
+          { text }
         </div>
-      </body>
-    </html>
+      </div>
+  }
+  
+  case class TOC(db: Database#H, curr_id: String) extends Press {
+    val html = <h4><ul>
+      {
+        db.all_docs map {
+          case "style.css" => Nil
+          case `curr_id` => <li> { curr_id } </li>
+          case id => <li> <a href={ DbId(db, id) }>{ id }</a> </li> 
+        }
+      }
+    </ul></h4>
   }
 }
