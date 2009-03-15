@@ -153,6 +153,21 @@ object App {
           <h2>{ title }</h2>
           { toc.html }
           { Unparsed(showdown.makeHtml(md).toString) }
+          <h3>#spde tweed</h3>
+          {
+            import dispatch.twitter.Search
+            (new Search)("#sxsw") map { js =>
+              val Search.text(text) = js
+              val Search.from_user(from) = js
+              val Search.created_at(time) = js
+              val Search.id(id) = js
+              val from_pg = "http://twitter.com/" + from
+              <p>
+                <a href={ from_pg }>{ from }</a>: { text }
+                <a href={ from_pg + "/statuses/" + id }><em>{ time }</em></a>
+              </p>
+            }
+          }
         </div>
       </div>
   }
