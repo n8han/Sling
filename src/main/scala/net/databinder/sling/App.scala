@@ -19,6 +19,8 @@ import dispatch.json._
 import org.apache.http.HttpResponse
 import org.apache.http.util.EntityUtils
 
+import net.lag.configgy.Configgy
+
 final class App extends StreamStreamServletApplication {
   import App._
   val application =
@@ -36,6 +38,7 @@ object PageDoc extends Doc {
 }
 
 object App {
+  Configgy.configure("/etc/sling.conf")
   import Js._
   implicit val charSet = UTF8
   def content_type = "text/html; charset=UTF-8"
@@ -61,7 +64,7 @@ object App {
   
   val showdown = new js.showdown()
   
-  def couch = Couch(System.getProperty("couch.host","127.0.0.1"))
+  def couch = Couch(Configgy.config.getString("couch.host","127.0.0.1"))
   
   def cache_heds(ri: HttpResponse, ro: Response[Stream]) = 
     ro(Date, ri.getFirstHeader(Date).getValue)(CacheControl, "max-age=600")(ETag, ri.getFirstHeader(ETag).getValue)
@@ -127,7 +130,7 @@ object App {
 
   trait Press { val html: Elem }
   
-q  case class Page(content: Content) extends Press {
+  case class Page(content: Content) extends Press {
     val html =
       <html xmlns="http://www.w3.org/1999/xhtml">
         <head>
