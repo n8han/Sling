@@ -84,7 +84,7 @@ object App {
             id match {
               case ("style.css") =>
                 Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8")) << 
-                  PageDoc.body(Js(entity.getContent())).toList
+                  (PageDoc.body ! str)(Js(entity.getContent()))
                 )
               case (id) if request !? "edit" =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << 
@@ -131,7 +131,7 @@ object App {
   }
   
   case class TOC(db: Database#H, curr_id: String, query: String) extends Press {
-    lazy val html = <h4><ul>
+    lazy val html = <h4><ul class="toc">
       {
         db.all_docs map {
           case "style.css" => Nil
@@ -160,7 +160,8 @@ object App {
             js match {
               case PageDoc.tweed(tweed) => 
                 <div>
-                  <h3>{ tweed } tweed</h3> {
+                  <h3>{ tweed } tweed</h3>
+                  <ul class="tweed"> {
                     import dispatch.twitter.Search
                     (new Search)(tweed) map { js =>
                       val Search.text(text) = js
@@ -168,12 +169,24 @@ object App {
                       val Search.created_at(time) = js
                       val Search.id(id) = js
                       val from_pg = "http://twitter.com/" + from
-                      <p>
-                        <a href={ from_pg }>{ from }</a>: { Unparsed(text) }
-                        <a href={ from_pg + "/statuses/" + id }><em>{ time }</em></a>
-                      </p>
+                      <li>
+                        <a href={ from_pg }>{ from }</a>:
+                        { Unparsed(text) }
+                        <div>
+                          <em>{ time }</em>
+                          <a href={ "http://twitter.com/home?status=@" + from + 
+                            "%20&in_reply_to_status_id=" + id + "&in_reply_to=" + from
+                            }>Reply</a>
+                          <a href={ from_pg + "/statuses/" + id }>View Tweet</a>
+                        </div>
+                      </li>
                     }
-                  }
+                  } </ul>
+                  <p>
+                    <a href={ "http://search.twitter.com/search?q=" + tweed }>
+                      See all Twitter Search results for { tweed }
+                    </a>
+                  </p>
                 </div>
               case _ => Nil
             }
