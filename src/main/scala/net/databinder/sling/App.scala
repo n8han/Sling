@@ -34,7 +34,8 @@ final class App extends StreamStreamServletApplication {
 }
 
 object PageDoc extends Doc {
-  val body: Extract[String] = 'body ? str
+  val body = 'body ? str
+  val tweed = 'tweed ? str
 }
 
 object App {
@@ -94,7 +95,7 @@ object App {
               case (id) =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << 
                   Page(ShowDocument(TOC(couched, id, ""), 
-                    PageDoc.body(Js(entity.getContent()))
+                    Js(entity.getContent())
                   )).html
                 )
             }
@@ -146,26 +147,35 @@ object App {
     lazy val title = toc.db.name.capitalize + " → " + toc.curr_id
   }
   
-  case class ShowDocument(toc: TOC, md: String) extends Document {
+  case class ShowDocument(toc: TOC, js: JsValue) extends Document {
     def body =
       <div id="content">
         <div class="container">
           <h2>{ title }</h2>
           { toc.html }
-          { Unparsed(showdown.makeHtml(md).toString) }
-          <h3>#spde tweed</h3>
           {
-            import dispatch.twitter.Search
-            (new Search)("#sxsw") map { js =>
-              val Search.text(text) = js
-              val Search.from_user(from) = js
-              val Search.created_at(time) = js
-              val Search.id(id) = js
-              val from_pg = "http://twitter.com/" + from
-              <p>
-                <a href={ from_pg }>{ from }</a>: { Unparsed(text) }
-                <a href={ from_pg + "/statuses/" + id }><em>{ time }</em></a>
-              </p>
+            val PageDoc.body(md) = js
+            Unparsed(showdown.makeHtml(md).toString) 
+          } {
+            js match {
+              case PageDoc.tweed(tweed) => 
+                <div>
+                  <h3>{ tweed } tweed</h3> {
+                    import dispatch.twitter.Search
+                    (new Search)(tweed) map { js =>
+                      val Search.text(text) = js
+                      val Search.from_user(from) = js
+                      val Search.created_at(time) = js
+                      val Search.id(id) = js
+                      val from_pg = "http://twitter.com/" + from
+                      <p>
+                        <a href={ from_pg }>{ from }</a>: { Unparsed(text) }
+                        <a href={ from_pg + "/statuses/" + id }><em>{ time }</em></a>
+                      </p>
+                    }
+                  }
+                </div>
+              case _ => Nil
             }
           }
         </div>
