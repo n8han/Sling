@@ -84,7 +84,7 @@ object App {
             id match {
               case ("style.css") =>
                 Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8")) << 
-                  (PageDoc.body ! str)(Js(entity.getContent()))
+                  PageDoc.body(Js(entity.getContent())).toList
                 )
               case (id) if request !? "edit" =>
                 Some(cache_heds(ri, OK(ContentType, content_type)) << strict << 
@@ -173,7 +173,7 @@ object App {
                         <a href={ from_pg }>{ from }</a>:
                         { Unparsed(text) }
                         <div>
-                          <em>{ time }</em>
+                          <em> { time.replace(" +0000", "") } </em>
                           <a href={ "http://twitter.com/home?status=@" + from + 
                             "%20&in_reply_to_status_id=" + id + "&in_reply_to=" + from
                             }>Reply</a>
