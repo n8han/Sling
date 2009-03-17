@@ -96,16 +96,16 @@ object App {
           request.headers.find {
             case (k, v) => k.asString == IfNoneMatch
           } map { _._2.mkString } map {
-            case DocTag(couch_et) =>
+            case ET(DocTag(couch_et)) =>
               (Some(couch_et), None, None)
-            case SpliceTag(DocTag(couch_et), tweed, latest) =>
+            case ET(SpliceTag(DocTag(couch_et), tweed, latest)) =>
               val res = (new Search)(tweed)
               res.firstOption.filter { case Search.id(id) => id.toString == latest } map { js =>
                 (Some(couch_et), Some(tweed), Some(res))
               } getOrElse { (None, Some(tweed), Some(res)) }
             case _ => (None, None, None)
           } getOrElse (None, None, None)
-        val couched = db(couch_et map { tag => couch << (IfNoneMatch, ET(DocTag(tag))) } getOrElse couch)
+        val couched = db(couch_et map { tag => println(ET(DocTag(tag))); couch << (IfNoneMatch, ET(DocTag(tag))) } getOrElse couch)
         couched(id) {
           case (OK.toInt, ri, Some(entity)) =>
             val ET(DocTag(couch_et)) = ri.getFirstHeader(ETag).getValue
