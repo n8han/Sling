@@ -5,9 +5,12 @@ import org.mortbay.jetty.{Server => JettyServer}
 import org.mortbay.jetty.webapp.WebAppContext
 import org.mortbay.jetty.ajp.Ajp13SocketConnector
 
+import net.lag.configgy.Configgy
+
 object Server extends Application {
+  App // App initializes Configgy
   val conn = new Ajp13SocketConnector()
-  conn.setPort(Integer.getInteger("jetty.ajp.port", 9000).intValue)
+  conn.setPort(Configgy.config.getInt("jetty.ajp.port", 9000))
   val server = new JettyServer()
   server.addConnector(conn)
   server.addHandler(new WebAppContext(server, "target/webapp", "/"))
