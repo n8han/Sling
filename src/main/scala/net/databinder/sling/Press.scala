@@ -70,16 +70,16 @@ case class ShowDocument(toc: TOC, md: String, tweedy: Option[(String, List[JsVal
                     { Unparsed(text) }
                     <div>
                       <em> { time.replace(" +0000", "") } </em>
-                      <a href={ "http://twitter.com/home?status=@" + from + 
-                        "%20&in_reply_to_status_id=" + id + "&in_reply_to=" + from
-                        }>Reply</a>
+                      <a href={ "http://twitter.com/home?" + Http ? Map(
+                          "status" -> ("@" + from + " "), "in_reply_to_status_id" -> id, "in_reply_to=" -> from
+                        ) }>Reply</a>
                       <a href={ from_pg + "/statuses/" + id }>View Tweet</a>
                     </div>
                   </li>
                 }
               } </ul>
               <p>
-                <a href={ "http://search.twitter.com/search?q=" + tweed }>
+                <a href={ "http://search.twitter.com/search?" + Http ? Map("q" -> tweed) }>
                   See all Twitter Search results for { tweed }
                 </a>
               </p>
