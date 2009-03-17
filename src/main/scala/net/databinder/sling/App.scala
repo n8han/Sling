@@ -63,14 +63,22 @@ object App {
       case _ => None
     }
   }
-  object ComboTag {
-    def unapplySeq(tag: String) = tag.replace("-gzip","").replace("\"","").split('|') match { // https://issues.apache.org/bugzilla/show_bug.cgi?id=39727
-      case ary if ary.length == 3 || ary.length == 1 => Some(ary)
+  // extract etag between quotes and discard any gzip addition
+  // (https://issues.apache.org/bugzilla/show_bug.cgi?id=39727)
+  object ET extends Regex("\"(.*)\"(?:-gzip)?") {
+    def apply(tag: String) = '"' + tag + '"'
+  }
+  object DocTag {
+    val Num = "(\\d+)".r
+    def unapply(tag: String) = tag match {
+      case Num(str) => Some(new BigDecimal(str))
       case _ => None
     }
-    def apply(couch_et: String) = couch_et
-    def apply(couch_et: String, tweed: String, latest_id: Number) = 
-      '"' + (couch_et.replaceAll("\"", "") :: tweed :: latest_id :: Nil).mkString("|") + '"'
+    def apply(num: Number) = num.toString
+  }
+  object SpliceTag {
+    def unapplySeq(tag: String) = Some(tag.split('|'))
+    def apply(seq: Seq[String]) =  seq.mkString('|')
   }
   
   val showdown = new js.showdown()
@@ -88,11 +96,11 @@ object App {
           request.headers.find {
             case (k, v) => k.asString == IfNoneMatch
           } map { _._2.mkString } map {
-            case ComboTag(couch_et) =>
+            case DocTag(couch_et) =>
               (couch << (IfNoneMatch, "\"" + couch_et + "\""), None)
-            case ComboTag(couch_et, tweed, latest) =>
+            case SpliceTag(DocTag(couch_et), tweed, latest) =>
               val res = (new Search)(tweed)
-              res.firstOption.filter { case Search.id(id) => println(id); println(latest); id.toString == latest } map { js =>
+              res.firstOption.filter { case Search.id(id) => id.toString == latest } map { js =>
                 (couch << (IfNoneMatch,  "\"" + couch_et+ "\""), Some(res))
               } getOrElse { (couch, Some(res)) }
             case _ => (couch, None)
@@ -101,14 +109,14 @@ object App {
         val couched = db(hedded_couch)
         couched(id) {
           case (OK.toInt, ri, Some(entity)) =>
-            val couch_et = ri.getFirstHeader(ETag).getValue
+            val ET(DocTag(couch_et)) = ri.getFirstHeader(ETag).getValue
             id match {
               case ("style.css") =>
-                Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8"), ComboTag(couch_et)) << 
+                Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8"), ET(DocTag(couch_et))) << 
                   PageDoc.body(Js(entity.getContent())).toList
                 )
               case (id) if request !? "edit" =>
-                Some(cache_heds(ri, OK(ContentType, content_type), ComboTag(couch_et)) << strict << 
+                Some(cache_heds(ri, OK(ContentType, content_type), ET(DocTag(couch_et))) << strict << 
                   Page(EditDocument(TOC(couched, id, "?edit"), 
                     EntityUtils.toString(entity, UTF8)
                   )).html
@@ -120,18 +128,20 @@ object App {
                   case PageDoc.tweed(t) => 
                     val ljs = tweed_js.getOrElse { (new Search)(t) }
                     val ct: String = ljs.firstOption.map {
-                      case Search.id(id) => ComboTag(couch_et, t, id)
-                    } getOrElse (ComboTag(couch_et))
+                      case Search.id(id) => ET(SpliceTag(DocTag(couch_et), t, id))
+                    } getOrElse ET(DocTag(couch_et))
                     (ct, Some(t, ljs))
-                  case _ => (ComboTag(couch_et), None)
+                  case _ => ( ET(DocTag(couch_et)), None )
                 }
                 Some(cache_heds(ri, OK(ContentType, content_type), combo_tag) << strict << 
                   Page(ShowDocument(TOC(couched, id, ""), md, tweedy)).html
                 )
             }
           case (NotModified.toInt, ri, _) => Some(cache_heds(ri, NotModified, 
-            // wrong etag if tweed present
-            ComboTag(ri.getFirstHeader(ETag).getValue)))
+            tweed_js match {
+              ////////////!
+              None => 
+            }
           case (NotFound.toInt, _, _) => None 
         }
 
