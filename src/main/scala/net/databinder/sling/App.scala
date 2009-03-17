@@ -65,20 +65,20 @@ object App {
   }
   // extract etag between quotes and discard any gzip addition
   // (https://issues.apache.org/bugzilla/show_bug.cgi?id=39727)
-  object ET extends Regex("\"(.*)\"(?:-gzip)?") {
+  object ET extends util.matching.Regex("\"(.*)\"(?:-gzip)?") {
     def apply(tag: String) = '"' + tag + '"'
   }
   object DocTag {
     val Num = "(\\d+)".r
     def unapply(tag: String) = tag match {
-      case Num(str) => Some(new BigDecimal(str))
+      case Num(str) => Some(BigDecimal(str))
       case _ => None
     }
     def apply(num: Number) = num.toString
   }
   object SpliceTag {
     def unapplySeq(tag: String) = Some(tag.split('|'))
-    def apply(seq: Seq[String]) =  seq.mkString('|')
+    def apply(seq: String*) =  seq.mkString("|")
   }
   
   val showdown = new js.showdown()
@@ -92,21 +92,20 @@ object App {
     request match {
       case Path(DbId(db, id)) =>
         val IfNoneMatch = "If-None-Match"
-        val (hedded_couch, tweed_js) =
+        val (couch_et, tweed, tweed_js) =
           request.headers.find {
             case (k, v) => k.asString == IfNoneMatch
           } map { _._2.mkString } map {
             case DocTag(couch_et) =>
-              (couch << (IfNoneMatch, "\"" + couch_et + "\""), None)
+              (Some(couch_et), None, None)
             case SpliceTag(DocTag(couch_et), tweed, latest) =>
               val res = (new Search)(tweed)
               res.firstOption.filter { case Search.id(id) => id.toString == latest } map { js =>
-                (couch << (IfNoneMatch,  "\"" + couch_et+ "\""), Some(res))
-              } getOrElse { (couch, Some(res)) }
-            case _ => (couch, None)
-          } getOrElse (couch, None)
-
-        val couched = db(hedded_couch)
+                (Some(couch_et), Some(tweed), Some(res))
+              } getOrElse { (None, Some(tweed), Some(res)) }
+            case _ => (None, None, None)
+          } getOrElse (None, None, None)
+        val couched = db(couch_et map { tag => couch << (IfNoneMatch, ET(DocTag(tag))) } getOrElse couch)
         couched(id) {
           case (OK.toInt, ri, Some(entity)) =>
             val ET(DocTag(couch_et)) = ri.getFirstHeader(ETag).getValue
@@ -128,7 +127,7 @@ object App {
                   case PageDoc.tweed(t) => 
                     val ljs = tweed_js.getOrElse { (new Search)(t) }
                     val ct: String = ljs.firstOption.map {
-                      case Search.id(id) => ET(SpliceTag(DocTag(couch_et), t, id))
+                      case Search.id(id) => ET(SpliceTag(DocTag(couch_et), t, id.toString))
                     } getOrElse ET(DocTag(couch_et))
                     (ct, Some(t, ljs))
                   case _ => ( ET(DocTag(couch_et)), None )
@@ -138,10 +137,13 @@ object App {
                 )
             }
           case (NotModified.toInt, ri, _) => Some(cache_heds(ri, NotModified, 
-            tweed_js match {
-              ////////////!
-              None => 
+            (couch_et, tweed, tweed_js) match {
+              case (Some(couch_et), Some(tweed), Some(Search.id(latest) :: _)) => 
+                ET(SpliceTag(DocTag(couch_et), tweed, latest.toString))
+              case (Some(couch_et), _, _) => ET(DocTag(couch_et))
+              case _ => ""
             }
+          ) )
           case (NotFound.toInt, _, _) => None 
         }
 
