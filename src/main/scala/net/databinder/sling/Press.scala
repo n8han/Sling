@@ -71,7 +71,7 @@ case class ShowDocument(toc: TOC, md: String, tweedy: Option[(String, List[JsVal
                     <div>
                       <em> { time.replace(" +0000", "") } </em>
                       <a href={ "http://twitter.com/home?" + Http ? Map(
-                          "status" -> ("@" + from + " "), "in_reply_to_status_id" -> id, "in_reply_to=" -> from
+                          "status" -> ("@" + from + " "), "in_reply_to_status_id" -> id, "in_reply_to" -> from
                         ) }>Reply</a>
                       <a href={ from_pg + "/statuses/" + id }>View Tweet</a>
                     </div>
