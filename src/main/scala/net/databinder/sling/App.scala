@@ -60,7 +60,7 @@ object Index {
 object ET extends util.matching.Regex("\"(.*)\"(?:-gzip)?") {
   def apply(tag: String) = '"' + tag + '"'
 }
-object DocTag {
+object NumTag {
   val Num = "(\\d+)".r
   def unapply(tag: String) = tag match {
     case Num(str) => Some(BigDecimal(str))
@@ -92,26 +92,26 @@ object App {
           request.headers.find {
             case (k, v) => k.asString == IfNoneMatch
           } map { _._2.mkString } map {
-            case ET(DocTag(couch_et)) =>
+            case ET(NumTag(couch_et)) =>
               (Some(couch_et), None, None)
-            case ET(SpliceTag(DocTag(couch_et), tweed, latest)) =>
+            case ET(SpliceTag(NumTag(couch_et), tweed, NumTag(latest))) =>
               val res = (new Search)(tweed)
-              res.firstOption.filter { case Search.id(id) => id.toString == latest } map { js =>
+              res.firstOption.filter { case Search.id(id) => id == latest } map { js =>
                 (Some(couch_et), Some(tweed), Some(res))
               } getOrElse { (None, Some(tweed), Some(res)) }
             case _ => (None, None, None)
           } getOrElse (None, None, None)
-        val couched = db(couch_et map { tag => println(ET(DocTag(tag))); couch << (IfNoneMatch, ET(DocTag(tag))) } getOrElse couch)
+        val couched = db(couch_et map { tag => println(ET(NumTag(tag))); couch << (IfNoneMatch, ET(NumTag(tag))) } getOrElse couch)
         couched(id) {
           case (OK.toInt, ri, Some(entity)) =>
-            val ET(DocTag(couch_et)) = ri.getFirstHeader(ETag).getValue
+            val ET(NumTag(couch_et)) = ri.getFirstHeader(ETag).getValue
             id match {
               case ("style.css") =>
-                Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8"), ET(DocTag(couch_et))) << 
+                Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8"), ET(NumTag(couch_et))) << 
                   PageDoc.body(Js(entity.getContent())).toList
                 )
               case (id) if request !? "edit" =>
-                Some(cache_heds(ri, OK(ContentType, content_type), ET(DocTag(couch_et))) << strict << 
+                Some(cache_heds(ri, OK(ContentType, content_type), ET(NumTag(couch_et))) << strict << 
                   Page(EditDocument(TOC(couched, id, "?edit"), 
                     EntityUtils.toString(entity, UTF8)
                   )).html
@@ -123,10 +123,10 @@ object App {
                   case PageDoc.tweed(t) => 
                     val ljs = tweed_js.getOrElse { (new Search)(t) }
                     val ct: String = ljs.firstOption.map {
-                      case Search.id(id) => ET(SpliceTag(DocTag(couch_et), t, id.toString))
-                    } getOrElse ET(DocTag(couch_et))
+                      case Search.id(id) => ET(SpliceTag(NumTag(couch_et), t, NumTag(id)))
+                    } getOrElse ET(NumTag(couch_et))
                     (ct, Some(t, ljs))
-                  case _ => ( ET(DocTag(couch_et)), None )
+                  case _ => ( ET(NumTag(couch_et)), None )
                 }
                 Some(cache_heds(ri, OK(ContentType, content_type), combo_tag) << strict << 
                   Page(ShowDocument(TOC(couched, id, ""), md, tweedy)).html
@@ -135,8 +135,8 @@ object App {
           case (NotModified.toInt, ri, _) => Some(cache_heds(ri, NotModified, 
             (couch_et, tweed, tweed_js) match {
               case (Some(couch_et), Some(tweed), Some(Search.id(latest) :: _)) => 
-                ET(SpliceTag(DocTag(couch_et), tweed, latest.toString))
-              case (Some(couch_et), _, _) => ET(DocTag(couch_et))
+                ET(SpliceTag(NumTag(couch_et), tweed, NumTag(latest)))
+              case (Some(couch_et), _, _) => ET(NumTag(couch_et))
               case _ => ""
             }
           ) )
