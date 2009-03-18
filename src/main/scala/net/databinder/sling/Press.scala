@@ -48,9 +48,9 @@ trait Document extends TitledContent {
 }
 
 case class ShowDocument(toc: TOC, md: String, tweedy: Option[(String, List[JsValue])]) extends Document {
-  override def head = super.head ++ tweedy.map {
-    case (tweed, _) => <link title="Atom 1.0 Feed" rel="alternate" type="application/atom+xml" href={
-        "http://search.twitter.com/search.atom?" + Http ? Map("q" -> tweed) }/>
+  override def head = super.head ++ tweedy.map { case (tweed, _) => 
+    <link title="Atom 1.0 Feed" rel="alternate" type="application/atom+xml" href={
+      "http://search.twitter.com/search.atom?" + Http ? Map("q" -> tweed) }/>
   }
 	
   def body =
