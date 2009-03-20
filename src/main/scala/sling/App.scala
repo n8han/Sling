@@ -1,4 +1,4 @@
-package net.databinder.sling
+package sling
 
 import slinky.http.servlet.StreamStreamServletApplication
 import slinky.http.servlet.StreamStreamServletApplication.resourceOr

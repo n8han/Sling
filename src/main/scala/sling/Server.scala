@@ -1,4 +1,4 @@
-package net.databinder.sling
+package sling
 
 import org.mortbay.jetty.Connector
 import org.mortbay.jetty.{Server => JettyServer}

@@ -4,7 +4,7 @@
     <servlet-class>slinky.http.servlet.StreamStreamServlet</servlet-class>
     <init-param>
       <param-name>application</param-name>
-      <param-value>net.databinder.sling.App</param-value>
+      <param-value>sling.App</param-value>
     </init-param>
   </servlet>
   <servlet-mapping>

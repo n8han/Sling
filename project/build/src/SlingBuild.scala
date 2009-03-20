@@ -9,7 +9,7 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
   val wmd_src = js_src / "wmd"
   val showdown_js = wmd_src / "showdown.js"
 
-  override def mainClass = Some("net.databinder.sling.Server")
+  override def mainClass = Some("sling.Server")
   override def unmanagedClasspath = super.unmanagedClasspath +++ js_classpath
   
   val jetty = "org.mortbay.jetty" % "jetty-ajp" % "6.1.14"

@@ -1,4 +1,4 @@
-package net.databinder.sling
+package sling
 
 import scala.xml.{Unparsed, Elem, NodeSeq}
 
