@@ -50,7 +50,7 @@ trait Document extends TitledContent {
 case class ShowDocument(toc: TOC, md: String, tweedy: Option[(String, List[JsValue])]) extends Document {
   override def head = super.head ++ tweedy.map { case (tweed, _) => 
     <link title="Atom 1.0 Feed" rel="alternate" type="application/atom+xml" href={
-      "http://search.twitter.com/search.atom?" + Http ? Map("q" -> tweed) }/>
+      "http://search.twitter.com/search.atom" + Http ? Map("q" -> tweed) }/>
   }
 	
   def body =
@@ -75,7 +75,7 @@ case class ShowDocument(toc: TOC, md: String, tweedy: Option[(String, List[JsVal
                     { Unparsed(text) }
                     <div>
                       <em> { time.replace(" +0000", "") } </em>
-                      <a href={ "http://twitter.com/home?" + Http ? Map(
+                      <a href={ "http://twitter.com/home" + Http ? Map(
                           "status" -> ("@" + from + " " + tweed + " "), "in_reply_to_status_id" -> id, "in_reply_to" -> from
                         ) }>Reply</a>
                       <a href={ from_pg + "/statuses/" + id }>View Tweet</a>
@@ -84,7 +84,7 @@ case class ShowDocument(toc: TOC, md: String, tweedy: Option[(String, List[JsVal
                 }
               } </ul>
               <p>
-                <a href={ "http://search.twitter.com/search?" + Http ? Map("q" -> tweed) }>
+                <a href={ "http://search.twitter.com/search" + Http ? Map("q" -> tweed) }>
                   See all Twitter Search results for { tweed }
                 </a>
               </p>
