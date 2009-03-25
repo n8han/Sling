@@ -22,7 +22,7 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
         <artifact name="slinky" url="http://slinky2.googlecode.com/svn/artifacts/2.1/slinky.jar" />
       </dependency>
       <dependency org="com.workingmouse" name="scalaz" rev="3.3" conf="default">
-        <artifact name="slinky" url="http://scalaz.googlecode.com/svn/artifacts/3.3/scalaz.jar" />
+        <artifact name="scalaz" url="http://scalaz.googlecode.com/svn/artifacts/3.3/scalaz.jar" />
       </dependency>
     </dependencies>
 
