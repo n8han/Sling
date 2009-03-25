@@ -15,12 +15,14 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
   val jetty = "org.mortbay.jetty" % "jetty-ajp" % "6.1.14"
   val dispatch = "net.databinder" % "dispatch" % "0.1-SNAPSHOT"
   val rhino = "rhino" % "js" % "1.7R1"
-  val scalaz = "com.workingmouse" % "scalaz" % "3.0"
 
   override def ivyXML =
     <dependencies>
       <dependency org="slinky" name="slinky" rev="2.1" conf="default">
         <artifact name="slinky" url="http://slinky2.googlecode.com/svn/artifacts/2.1/slinky.jar" />
+      </dependency>
+      <dependency org="com.workingmouse" name="scalaz" rev="3.3" conf="default">
+        <artifact name="slinky" url="http://scalaz.googlecode.com/svn/artifacts/3.3/scalaz.jar" />
       </dependency>
     </dependencies>
 
