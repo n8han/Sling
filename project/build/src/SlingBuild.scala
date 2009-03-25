@@ -53,7 +53,7 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
 
   lazy val script = task {
     FileUtilities.write((info.projectPath / "run.sh").asFile,
-      "#! /bin/sh\n\n$JAVA_HOME/bin/java -cp " + 
+      "java -cp " + 
       (Path.makeString(runClasspath.get) :: scalaJars.map(_.getPath).toList)
         .mkString(java.io.File.pathSeparator) + 
       " $JAVA_OPTIONS " + mainClass.mkString + "\n"
