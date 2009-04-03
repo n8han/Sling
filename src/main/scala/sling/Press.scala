@@ -122,6 +122,7 @@ case class EditDocument(toc: TOC, md: String) extends Document {
       </div></div></div>
       <div id="content">
         <div class="container">
+          <h2>{ title }</h2>
           <img id="shade" title="Toggle Editor" src="/css/ship-up.gif" />
           { toc.html }
           <div id="body-preview"></div>
