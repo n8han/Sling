@@ -62,7 +62,10 @@ case class ShowDocument(toc: TOC, md: String, tweedy: Option[(String, List[JsVal
         {
           tweedy map { case (tweed, js) =>
             <div>
-              <h3>{ tweed } tweed</h3>
+              <h3>
+                { tweed } tweed 
+                [<a href={ "http://twitter.com/home" + Http ? Map("status" -> (tweed + " ")) }>+</a>]
+              </h3>
               <ul class="tweed"> {
                 js map { js =>
                   val Search.text(text) = js
