@@ -46,7 +46,7 @@ object DbId {
     case _ => None
   }
   def apply(db: Database, id: String) = 
-    "/" + (db.name :: id :: Nil).mkString("/")
+    "/" + (db.name :: to_path(id) :: Nil).mkString("/")
 }
 object Index {
   val Re =  "^/([a-z_]+)/?$".r
