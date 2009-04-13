@@ -108,7 +108,7 @@ case class EditDocument(toc: TOC, md: String) extends Document {
     <script type="text/javascript"> 
       { Unparsed(
           "var doc = " + md + ";" +
-          "var doc_url = '/couch" + DbId(toc.db, toc.curr_id) + "';"
+          "var doc_url = '/couch/" + toc.db.name + "/" + toc.curr_id + "';"
       ) }
     </script>
   )
