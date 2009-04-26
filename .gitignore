@@ -1,3 +1,4 @@
 target/
 *_managed/
 run.sh
+project/boot/

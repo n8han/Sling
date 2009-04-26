@@ -32,7 +32,7 @@ final class App extends StreamStreamServletApplication {
     })
 }
 
-object PageDoc extends Doc {
+object PageDoc extends Id {
   val body = 'body ? str
   val tweed = 'tweed ? str
 }
@@ -42,16 +42,16 @@ object DbId {
   def to_id(web: String) = web.replaceAll("_", " ")
   val Re = "^/([a-z_]+)/([^/]+)$".r
   def unapply(path: String) = path match {
-    case Re(db, id) => Some(Database(db), to_id(id))
+    case Re(db, id) => Some(new Db(db), to_id(id))
     case _ => None
   }
-  def apply(db: Database, id: String) = 
-    "/" + (db.name :: id :: Nil).mkString("/")
+  def apply(db: Db, id: String) = 
+    "/" + (db.name :: to_path(id) :: Nil).mkString("/")
 }
 object Index {
   val Re =  "^/([a-z_]+)/?$".r
   def unapply(path: String) = path match { 
-    case Re(db) => Some(Database(db)) 
+    case Re(db) => Some(Db(db)) 
     case _ => None
   }
 }
@@ -78,7 +78,6 @@ object App {
   import Js._
   implicit val charSet = UTF8
   def content_type = "text/html; charset=UTF-8"
-  
   def couch = Couch(Configgy.config.getString("couch.host","127.0.0.1"))
   
   def cache_heds(ri: HttpResponse, ro: Response[Stream], combo_tag: String) = 
@@ -101,8 +100,8 @@ object App {
               } getOrElse { (None, Some(tweed), Some(res)) }
             case _ => (None, None, None)
           } getOrElse (None, None, None)
-        val couched = db(couch_et map { tag => println(ET(NumTag(tag))); couch << (IfNoneMatch, ET(NumTag(tag))) } getOrElse couch)
-        couched(id) {
+        val couched = couch_et map { tag => couch << (IfNoneMatch, ET(NumTag(tag))) } getOrElse couch
+        Doc(db, id) {
           case (OK.toInt, ri, Some(entity)) =>
             val ET(NumTag(couch_et)) = ri.getFirstHeader(ETag).getValue
             id match {
@@ -112,7 +111,7 @@ object App {
                 )
               case (id) if request !? "edit" =>
                 Some(cache_heds(ri, OK(ContentType, content_type), ET(NumTag(couch_et))) << strict << 
-                  Page(EditDocument(TOC(couched, id, "?edit"), 
+                  Page(EditDocument(TOC(db, couched, id, "?edit"), 
                     EntityUtils.toString(entity, UTF8)
                   )).html
                 )
@@ -129,7 +128,7 @@ object App {
                   case _ => ( ET(NumTag(couch_et)), None )
                 }
                 Some(cache_heds(ri, OK(ContentType, content_type), combo_tag) << strict << 
-                  Page(ShowDocument(TOC(couched, id, ""), md, tweedy)).html
+                  Page(ShowDocument(TOC(db, couched, id, ""), md, tweedy)).html
                 )
             }
           case (NotModified.toInt, ri, _) => Some(cache_heds(ri, NotModified, 
@@ -141,9 +140,9 @@ object App {
             }
           ) )
           case (NotFound.toInt, _, _) => None 
-        }
+        } (couched)
 
-      case Path(Index(db)) => Some(redirect(DbId(db, db(couch).all_docs.first)))
+      case Path(Index(db)) => Some(redirect(DbId(db, couch(db.all_docs).first)))
       case _ => None
     }
 }

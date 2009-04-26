@@ -13,7 +13,7 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
   override def unmanagedClasspath = super.unmanagedClasspath +++ js_classpath
   
   val jetty = "org.mortbay.jetty" % "jetty-ajp" % "6.1.14"
-  val dispatch = "net.databinder" % "dispatch" % "0.1-SNAPSHOT"
+  val dispatch = "net.databinder" % "dispatch" % "0.2-SNAPSHOT"
   val rhino = "rhino" % "js" % "1.7R1"
 
   override def ivyXML =

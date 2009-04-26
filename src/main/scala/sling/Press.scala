@@ -30,10 +30,10 @@ trait TitledContent extends Content {
   def head: NodeSeq = <title> { title } </title>
 }
 
-case class TOC(db: Database#H, curr_id: String, query: String) extends Press {
+case class TOC(db: Db, couch: Http, curr_id: String, query: String) extends Press {
   lazy val html = <h4><ul class="toc">
     {
-      db.all_docs map {
+      couch(db.all_docs) map {
         case "style.css" => Nil
         case `curr_id` => <li> { curr_id } </li>
         case id => <li> <a href={ DbId(db, id) + query }>{ id }</a> </li> 
