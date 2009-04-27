@@ -1,13 +1,13 @@
 package sling
 
-import scala.xml.{Unparsed, Elem, NodeSeq}
+import scala.xml.{Unparsed, Elem, Node}
 
 import dispatch._
 import dispatch.couch._
 import dispatch.json._
 import dispatch.twitter.Search
 
-trait Press { val html: Elem }
+trait Press { val html: Seq[Node] }
 
 case class Page(content: Content) extends Press {
   val html =
@@ -23,23 +23,24 @@ case class Page(content: Content) extends Press {
       </body>
     </html>
 }
-trait Content { def head: NodeSeq; def body: Elem }
+trait Content { def head: Seq[Node]; def body: Elem }
 
 trait TitledContent extends Content {
   val title: String
-  def head: NodeSeq = <title> { title } </title>
+  def head: Seq[Node] = <title> { title } </title>
 }
 
 case class TOC(db: Db, couch: Http, curr_id: String, query: String) extends Press {
-  lazy val html = <h4><ul class="toc">
+  lazy val html = 
     {
-      couch(db.all_docs) map {
-        case "style.css" => Nil
+      couch(db.all_docs) filter { _ != "style.css" } map {
         case `curr_id` => <li> { curr_id } </li>
         case id => <li> <a href={ DbId(db, id) + query }>{ id }</a> </li> 
+      } match {
+        case Seq(_) => Nil
+        case lis => <h4><ul class="toc"> { lis } </ul></h4>
       }
     }
-  </ul></h4>
 }
 
 trait Document extends TitledContent {
@@ -62,7 +63,10 @@ case class ShowDocument(toc: TOC, md: String, tweedy: Option[(String, List[JsVal
         {
           tweedy map { case (tweed, js) =>
             <div>
-              <h3>{ tweed } tweed</h3>
+              <h3>
+                { tweed } tweed 
+                [<a href={ "http://twitter.com/home" + Http ? Map("status" -> (tweed + " ")) }>+</a>]
+              </h3>
               <ul class="tweed"> {
                 js map { js =>
                   val Search.text(text) = js
@@ -105,7 +109,7 @@ case class EditDocument(toc: TOC, md: String) extends Document {
     <script type="text/javascript"> 
       { Unparsed(
           "var doc = " + md + ";" +
-          "var doc_url = '/couch" + DbId(toc.db, toc.curr_id) + "';"
+          "var doc_url = '/couch/" + toc.db.name + "/" + toc.curr_id + "';"
       ) }
     </script>
   )
@@ -122,6 +126,7 @@ case class EditDocument(toc: TOC, md: String) extends Document {
       </div></div></div>
       <div id="content">
         <div class="container">
+          <h2>{ title }</h2>
           <img id="shade" title="Toggle Editor" src="/css/ship-up.gif" />
           { toc.html }
           <div id="body-preview"></div>
