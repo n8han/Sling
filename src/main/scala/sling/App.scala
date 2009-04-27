@@ -78,7 +78,10 @@ object App {
   import Js._
   implicit val charSet = UTF8
   def content_type = "text/html; charset=UTF-8"
-  def couch = Couch(Configgy.config.getString("couch.host","127.0.0.1"))
+  def couch = new Http(
+    Configgy.config.getString("couch.host","127.0.0.1"),
+    Configgy.config.getInt("couch.port",5984)
+  )
   
   def cache_heds(ri: HttpResponse, ro: Response[Stream], combo_tag: String) = 
     ro(Date, ri.getFirstHeader(Date).getValue)(CacheControl, "max-age=600")(ETag, combo_tag)
