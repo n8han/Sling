@@ -15,7 +15,7 @@ case class Page(content: Content) extends Press {
       <head>
         <link rel="stylesheet" href="/css/blueprint/screen.css" type="text/css" media="screen, projection" />
         <link rel="stylesheet" href="/css/blueprint/print.css" type="text/css" media="print" /> 
-        <link rel="stylesheet" href="style.css" type="text/css" media="screen, projection" /> 
+        <link rel="stylesheet" href="style.css" type="text/css" /> 
         { content.head }
       </head>
       <body>
