@@ -90,6 +90,7 @@ object App {
     request match {
       case Path(DbId(db, id)) =>
         val IfNoneMatch = "If-None-Match"
+        val search = new twitter.SearchHttp
         val (couch_et, tweed, tweed_js) =
           request.headers.find {
             case (k, v) => k.asString == IfNoneMatch
@@ -97,7 +98,7 @@ object App {
             case ET(NumTag(couch_et)) =>
               (Some(couch_et), None, None)
             case ET(SpliceTag(NumTag(couch_et), tweed, NumTag(latest))) =>
-              val res = (new Search)(tweed)
+              val res = search(Search(tweed))
               res.firstOption.filter { case Search.id(id) => id == latest } map { js =>
                 (Some(couch_et), Some(tweed), Some(res))
               } getOrElse { (None, Some(tweed), Some(res)) }
@@ -123,7 +124,7 @@ object App {
                 val PageDoc.body(md) = js
                 val (combo_tag, tweedy) = js match {
                   case PageDoc.tweed(t) => 
-                    val ljs = tweed_js.getOrElse { (new Search)(t) }
+                    val ljs = tweed_js.getOrElse { search(Search(t)) }
                     val ct: String = ljs.firstOption.map {
                       case Search.id(id) => ET(SpliceTag(NumTag(couch_et), t, NumTag(id)))
                     } getOrElse ET(NumTag(couch_et))
