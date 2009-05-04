@@ -32,6 +32,13 @@ final class App extends StreamStreamServletApplication {
     })
 }
 
+object MyCouch {
+  def apply() = Couch(
+    Configgy.config.getString("couch.host","127.0.0.1"),
+    Configgy.config.getInt("couch.port",5984)
+  )
+}
+
 object PageDoc extends Id {
   val body = 'body ? str
   val tweed = 'tweed ? str
@@ -42,7 +49,7 @@ object DbId {
   def to_id(web: String) = web.replaceAll("_", " ")
   val Re = "^/([a-z_]+)/([^/]+)$".r
   def unapply(path: String) = path match {
-    case Re(db, id) => Some(new Db(db), to_id(id))
+    case Re(db, id) => Some(new Db(MyCouch(), db), to_id(id))
     case _ => None
   }
   def apply(db: Db, id: String) = 
@@ -51,7 +58,7 @@ object DbId {
 object Index {
   val Re =  "^/([a-z_]+)/?$".r
   def unapply(path: String) = path match { 
-    case Re(db) => Some(Db(db)) 
+    case Re(db) => Some(Db(MyCouch(), db)) 
     case _ => None
   }
 }
@@ -78,19 +85,15 @@ object App {
   import Js._
   implicit val charSet = UTF8
   def content_type = "text/html; charset=UTF-8"
-  def couch = new Http(
-    Configgy.config.getString("couch.host","127.0.0.1"),
-    Configgy.config.getInt("couch.port",5984)
-  )
   
   def cache_heds(ri: HttpResponse, ro: Response[Stream], combo_tag: String) = 
     ro(Date, ri.getFirstHeader(Date).getValue)(CacheControl, "max-age=600")(ETag, combo_tag)
   
-  def app(implicit request: Request[Stream]) =
+  def app(implicit request: Request[Stream]) = {
+    val http = new Http
     request match {
       case Path(DbId(db, id)) =>
         val IfNoneMatch = "If-None-Match"
-        val search = new twitter.SearchHttp
         val (couch_et, tweed, tweed_js) =
           request.headers.find {
             case (k, v) => k.asString == IfNoneMatch
@@ -98,13 +101,13 @@ object App {
             case ET(NumTag(couch_et)) =>
               (Some(couch_et), None, None)
             case ET(SpliceTag(NumTag(couch_et), tweed, NumTag(latest))) =>
-              val res = search(Search(tweed))
+              val res = http(Search(tweed).results)
               res.firstOption.filter { case Search.id(id) => id == latest } map { js =>
                 (Some(couch_et), Some(tweed), Some(res))
               } getOrElse { (None, Some(tweed), Some(res)) }
             case _ => (None, None, None)
           } getOrElse (None, None, None)
-        val couched = couch_et map { tag => couch << (IfNoneMatch, ET(NumTag(tag))) } getOrElse couch
+        val couched = couch_et map { tag => MyCouch() <:< Map(IfNoneMatch -> ET(NumTag(tag))) } getOrElse MyCouch()
         Doc(db, id) {
           case (OK.toInt, ri, Some(entity)) =>
             val ET(NumTag(couch_et)) = ri.getFirstHeader(ETag).getValue
@@ -115,7 +118,7 @@ object App {
                 )
               case (id) if request !? "edit" =>
                 Some(cache_heds(ri, OK(ContentType, content_type), ET(NumTag(couch_et))) << strict << 
-                  Page(EditDocument(TOC(db, couched, id, "?edit"), 
+                  Page(EditDocument(TOC(db, http, id, "?edit"), 
                     EntityUtils.toString(entity, UTF8)
                   )).html
                 )
@@ -124,7 +127,7 @@ object App {
                 val PageDoc.body(md) = js
                 val (combo_tag, tweedy) = js match {
                   case PageDoc.tweed(t) => 
-                    val ljs = tweed_js.getOrElse { search(Search(t)) }
+                    val ljs = tweed_js.getOrElse { http(Search(t).results) }
                     val ct: String = ljs.firstOption.map {
                       case Search.id(id) => ET(SpliceTag(NumTag(couch_et), t, NumTag(id)))
                     } getOrElse ET(NumTag(couch_et))
@@ -132,7 +135,7 @@ object App {
                   case _ => ( ET(NumTag(couch_et)), None )
                 }
                 Some(cache_heds(ri, OK(ContentType, content_type), combo_tag) << strict << 
-                  Page(ShowDocument(TOC(db, couched, id, ""), md, tweedy)).html
+                  Page(ShowDocument(TOC(db, http, id, ""), md, tweedy)).html
                 )
             }
           case (NotModified.toInt, ri, _) => Some(cache_heds(ri, NotModified, 
@@ -144,9 +147,10 @@ object App {
             }
           ) )
           case (NotFound.toInt, _, _) => None 
-        } (couched)
+        } (http)
 
-      case Path(Index(db)) => Some(redirect(DbId(db, couch(db.all_docs).first)))
+      case Path(Index(db)) => Some(redirect(DbId(db, http(db.all_docs).first)))
       case _ => None
     }
+  }
 }
