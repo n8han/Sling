@@ -1,6 +1,6 @@
 import sbt._
 
-class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
+class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
 {
   val lag_net = "lag.net repository" at "http://www.lag.net/repo"
 
@@ -25,8 +25,7 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
         <artifact name="scalaz" url="http://scalaz.googlecode.com/svn/artifacts/3.3/scalaz.jar" />
       </dependency>
     </dependencies>
-
-  
+    
   lazy val wmd = fileTask(wmd_src :: Nil) {
     import FileUtilities._ 
     val toAppend = "\nfunction makeHtml(md) { return new Showdown.converter().makeHtml('' + md) }" 
@@ -62,3 +61,4 @@ class SlingBuild(info: ProjectInfo) extends DefaultWebProject(info)
     , log)
   } dependsOn prepareWebapp
 }
+

@@ -67,17 +67,14 @@ object Index {
 object ET extends util.matching.Regex("\"(.*)\"(?:-gzip)?") {
   def apply(tag: String) = '"' + tag + '"'
 }
-object NumTag {
-  val Num = "(\\d+)".r
-  def unapply(tag: String) = tag match {
-    case Num(str) => Some(BigDecimal(str))
+
+object SpliceTag {
+  def unapply(tag: String) = tag.split('|') match {
+    case Seq(couch_et, tweed, latest) => Some((couch_et, tweed, BigDecimal(latest)))
     case _ => None
   }
-  def apply(num: Number) = num.toString
-}
-object SpliceTag {
-  def unapplySeq(tag: String) = Some(tag.split('|'))
-  def apply(seq: String*) =  seq.mkString("|")
+  def apply(couch_et: String, tweed: String, latest: BigDecimal) = 
+    List(couch_et, tweed, latest).mkString("|")
 }
 
 object App {
@@ -98,26 +95,26 @@ object App {
           request.headers.find {
             case (k, v) => k.asString == IfNoneMatch
           } map { _._2.mkString } map {
-            case ET(NumTag(couch_et)) =>
-              (Some(couch_et), None, None)
-            case ET(SpliceTag(NumTag(couch_et), tweed, NumTag(latest))) =>
+            case ET(SpliceTag(couch_et, tweed, latest)) =>
               val res = http(Search(tweed).results)
               res.firstOption.filter { case Search.id(id) => id == latest } map { js =>
                 (Some(couch_et), Some(tweed), Some(res))
               } getOrElse { (None, Some(tweed), Some(res)) }
+            case ET(couch_et) =>
+              (Some(couch_et), None, None)
             case _ => (None, None, None)
           } getOrElse (None, None, None)
-        val with_heds = couch_et map { tag => /\ <:< Map(IfNoneMatch -> ET(NumTag(tag))) } getOrElse /\
+        val with_heds = couch_et map { tag => /\ <:< Map(IfNoneMatch -> ET(tag)) } getOrElse /\
         (http x with_heds <& Doc(db, id)) {
           case (OK.toInt, ri, Some(entity)) =>
-            val ET(NumTag(couch_et)) = ri.getFirstHeader(ETag).getValue
+            val ET(couch_et) = ri.getFirstHeader(ETag).getValue
             id match {
               case ("style.css") =>
-                Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8"), ET(NumTag(couch_et))) << 
+                Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8"), ET(couch_et)) << 
                   PageDoc.body(Js(entity.getContent())).toList
                 )
               case (id) if request !? "edit" =>
-                Some(cache_heds(ri, OK(ContentType, content_type), ET(NumTag(couch_et))) << strict << 
+                Some(cache_heds(ri, OK(ContentType, content_type), ET(couch_et)) << strict << 
                   Page(EditDocument(TOC(db, http, id, "?edit"), 
                     EntityUtils.toString(entity, UTF8)
                   )).html
@@ -129,10 +126,10 @@ object App {
                   case PageDoc.tweed(t) => 
                     val ljs = tweed_js.getOrElse { http(Search(t).results) }
                     val ct: String = ljs.firstOption.map {
-                      case Search.id(id) => ET(SpliceTag(NumTag(couch_et), t, NumTag(id)))
-                    } getOrElse ET(NumTag(couch_et))
+                      case Search.id(id) => ET(SpliceTag(couch_et, t, id))
+                    } getOrElse ET(couch_et)
                     (ct, Some(t, ljs))
-                  case _ => ( ET(NumTag(couch_et)), None )
+                  case _ => ( ET(couch_et), None )
                 }
                 Some(cache_heds(ri, OK(ContentType, content_type), combo_tag) << strict << 
                   Page(ShowDocument(TOC(db, http, id, ""), md, tweedy)).html
@@ -141,8 +138,8 @@ object App {
           case (NotModified.toInt, ri, _) => Some(cache_heds(ri, NotModified, 
             (couch_et, tweed, tweed_js) match {
               case (Some(couch_et), Some(tweed), Some(Search.id(latest) :: _)) => 
-                ET(SpliceTag(NumTag(couch_et), tweed, NumTag(latest)))
-              case (Some(couch_et), _, _) => ET(NumTag(couch_et))
+                ET(SpliceTag(couch_et, tweed, latest))
+              case (Some(couch_et), _, _) => ET(couch_et)
               case _ => ""
             }
           ) )
