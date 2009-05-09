@@ -108,7 +108,7 @@ object App {
             case _ => (None, None, None)
           } getOrElse (None, None, None)
         val with_heds = couch_et map { tag => /\ <:< Map(IfNoneMatch -> ET(NumTag(tag))) } getOrElse /\
-        (http x with_heds / Doc(db, id)) {
+        (http x with_heds <& Doc(db, id)) {
           case (OK.toInt, ri, Some(entity)) =>
             val ET(NumTag(couch_et)) = ri.getFirstHeader(ETag).getValue
             id match {
