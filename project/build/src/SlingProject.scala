@@ -2,6 +2,7 @@ import sbt._
 
 class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
 {
+  val databinder_net = "Databinder repository" at "http://databinder.net/repo"
   val lag_net = "lag.net repository" at "http://www.lag.net/repo"
 
   val js_classpath = outputPath / "js_classes"
@@ -13,7 +14,7 @@ class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
   override def unmanagedClasspath = super.unmanagedClasspath +++ js_classpath
   
   val jetty = "org.mortbay.jetty" % "jetty-ajp" % "6.1.17"
-  val dispatch = "net.databinder" % "dispatch" % "0.3-SNAPSHOT"
+  val dispatch = "net.databinder" % "dispatch" % "0.3.0"
   val rhino = "rhino" % "js" % "1.7R1"
 
   override def ivyXML =
