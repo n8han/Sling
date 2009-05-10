@@ -59,7 +59,7 @@ case class ShowDocument(toc: TOC, md: String, tweedy: Option[(String, List[JsVal
       <div class="container">
         <h2>{ title }</h2>
         { toc.html }
-        { Unparsed((new js.showdown).makeHtml(md).toString) } 
+        { Unparsed((new js.Duel).makeHtml(md).toString) } 
         {
           tweedy map { case (tweed, js) =>
             <div>
@@ -105,6 +105,7 @@ case class EditDocument(toc: TOC, md: String) extends Document {
     <script type="text/javascript" src="/script/jquery.js"></script>
     <script type="text/javascript" src="/script/json2.js"></script>
     <script type="text/javascript" src="/js/wmd/showdown.js"></script>
+    <script type="text/javascript" src="/js/duel.js"></script>
     <script type="text/javascript" src="/js/edit.js"></script>
     <script type="text/javascript"> 
       { Unparsed(
