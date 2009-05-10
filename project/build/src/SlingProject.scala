@@ -6,8 +6,8 @@ class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
   val lag_net = "lag.net repository" at "http://www.lag.net/repo"
 
   val js_classpath = outputPath / "js_classes"
-  val js_src = (path("src_managed") / "main" ##) / "js"
-  val wmd_src = js_src / "wmd"
+  val js_managed = (path("src_managed") / "main" ##) / "js"
+  val wmd_src = js_managed / "wmd"
   val showdown_js = wmd_src / "showdown.js"
 
   override def mainClass = Some("sling.Server")
@@ -51,7 +51,7 @@ class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
   } dependsOn wmd
   
   override def compileAction = super.compileAction dependsOn(showdown)
-  override def extraWebappFiles = js_src ** ("*")
+  override def extraWebappFiles = js_managed ** ("*")
 
   lazy val script = task {
     FileUtilities.write((info.projectPath / "run.sh").asFile,
