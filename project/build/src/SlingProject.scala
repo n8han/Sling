@@ -38,26 +38,24 @@ class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
     }
   }
 
-  lazy val duel = fileTask(js_classpath from showdown_js) {
+  lazy val duel = fileTask(js_classpath from List(duel_js, showdown_js)) {
     import FileUtilities._ 
     val duel_together = outputPath / "Duel.js"
-    copyFile(duel_js, duel_together, log) orElse {
-  		readStream(showdown_js.asFile, log) { in =>
-  		  appendStream(duel_together.asFile, log) { out =>
-  		    transfer(in, out, log)
-  		  }
-  		}
-    } orElse {
-      createDirectory(js_classpath, log) orElse {
-        Run.run(
-          "org.mozilla.javascript.tools.jsc.Main",
-          descendents(managedDependencyPath, "js-*.jar").get,
-          "-d" :: js_classpath.toString :: "-package" :: "js" :: "-extends" :: "java.lang.Object" ::
-            showdown_js.asFile.toString :: duel_js.asFile.toString :: Nil,
-          log
-        )
-      }
-    }
+    copyFile(duel_js, duel_together, log) orElse
+		readStream(showdown_js.asFile, log) { in =>
+		  appendStream(duel_together.asFile, log) { out =>
+		    transfer(in, out, log)
+		  }
+		} orElse
+    FileUtilities.clean(js_classpath :: Nil, true, log) orElse
+    createDirectory(js_classpath, log) orElse 
+      Run.run(
+        "org.mozilla.javascript.tools.jsc.Main",
+        descendents(managedDependencyPath, "js-*.jar").get,
+        "-d" :: js_classpath.toString :: "-package" :: "js" :: "-extends" :: "java.lang.Object" ::
+          duel_together.asFile.toString :: Nil,
+        log
+      )
   } dependsOn wmd
   
   override def compileAction = super.compileAction dependsOn(duel)
