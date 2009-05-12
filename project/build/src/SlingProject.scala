@@ -42,11 +42,11 @@ class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
     import FileUtilities._ 
     val duel_together = outputPath / "Duel.js"
     copyFile(duel_js, duel_together, log) orElse
-		readStream(showdown_js.asFile, log) { in =>
-		  appendStream(duel_together.asFile, log) { out =>
-		    transfer(in, out, log)
-		  }
-		} orElse
+    readStream(showdown_js.asFile, log) { in =>
+      appendStream(duel_together.asFile, log) { out =>
+        transfer(in, out, log)
+      }
+    } orElse
     FileUtilities.clean(js_classpath :: Nil, true, log) orElse
     createDirectory(js_classpath, log) orElse 
       Run.run(

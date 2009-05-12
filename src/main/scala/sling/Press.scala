@@ -53,7 +53,7 @@ case class ShowDocument(toc: TOC, md: String, tweedy: Option[(String, List[JsVal
     <link title="Atom 1.0 Feed" rel="alternate" type="application/atom+xml" href={
       "http://search.twitter.com/search.atom" + Http ? Map("q" -> tweed) }/>
   }
-	
+
   def body =
     <div id="content">
       <div class="container">
