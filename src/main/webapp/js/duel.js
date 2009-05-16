@@ -1,5 +1,5 @@
 function makeHtml(md) {
-  return new Showdown.converter().makeHtml(dueval(md));
+  return new Showdown.converter().makeHtml(dusmart(dueval(md)));
 }
 
 function dueval(str) {
@@ -20,3 +20,15 @@ function dueval(str) {
   return out.join("");
 }
 
+function dusmart(s) {
+  s = s.replace(/(\w)'/g, "$1&rsquo;");
+  s = s.replace(/'(\w)/g, "&lsquo;$1");
+
+  s = s.replace(/(\w)"/g, "$1&rdquo;");
+  s = s.replace(/"(\w)/g, "&ldquo;$1");
+
+  s = s.replace(/([^\n-])---([\w ])/g, "$1&mdash;$2");
+  s = s.replace(/([^\n-])--([\w ])/g, "$1&ndash;$2");
+
+  return s;
+}
