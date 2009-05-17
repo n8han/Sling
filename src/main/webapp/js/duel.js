@@ -1,34 +1,45 @@
 function makeHtml(md) {
-  return new Showdown.converter().makeHtml(dusmart(dueval(md)));
+  return dusmart(new Showdown.converter().makeHtml(dueval(md)));
 }
 
 function dueval(str) {
-  var re = /#\{[^\}]*\}/g;
-  
-  var text = ('' + str).split(re);
-  var code = str.match(re) || [];
-  var out = [], i = 0, j = 0;
-  while (i < text.length || j < code.length) {
-    if (i < text.length) out.push(text[i]);
-    if (j < code.length) try {
-      out.push(eval(code[j].substr(1)));
+  return duit(str, /#\{[^\}]*\}/g, function(code) {
+    try {
+      return eval(code.substr(1));
     } catch (err) {
-      out.push("[" + err + "]")
+      return "[" + err + "]"
     }
+  }, function(text) { return text });
+}
+
+function dusmart(str) {
+  var ident = function(text) { return text };
+  return duit(str, /<code>[^]+?<\/code>/g, ident, function(str) {
+    return duit(str, /<[^>]+>/g, ident, function(s) {
+      s = s.replace(/(\S)'/g, "$1&rsquo;");
+      s = s.replace(/'(\S)/g, "&lsquo;$1");
+
+      s = s.replace(/(\S)"/g, "$1&rdquo;");
+      s = s.replace(/"(\S)/g, "&ldquo;$1");
+
+      s = s.replace(/---([^-])/g, "&mdash;$1");
+      s = s.replace(/([^-])---/g, "$1&mdash;");
+      s = s.replace(/--([^-])/g, "&ndash;$1");
+      s = s.replace(/([^-])--/g, "$1&ndash;");
+
+      return s;
+    });
+  });
+}
+
+function duit(str, re, f_match, f_rest) {
+  var rest = ('' + str).split(re);
+  var match = str.match(re) || [];
+  var out = [], i = 0, j = 0;
+  while (i < rest.length || j < match.length) {
+    if (i < rest.length) out.push(f_rest(rest[i]));
+    if (j < match.length) out.push(f_match(match[j]));
     i++; j++;
   }
   return out.join("");
-}
-
-function dusmart(s) {
-  s = s.replace(/(\S)'/g, "$1&rsquo;");
-  s = s.replace(/'(\S)/g, "&lsquo;$1");
-
-  s = s.replace(/(\S)"/g, "$1&rdquo;");
-  s = s.replace(/"(\S)/g, "&ldquo;$1");
-
-  s = s.replace(/([^-])---([^-])/g, "$1&mdash;$2");
-  s = s.replace(/([^-])--([^-])/g, "$1&ndash;$2");
-
-  return s;
 }
