@@ -15,19 +15,21 @@ function dueval(str) {
 function dusmart(str) {
   var ident = function(text) { return text };
   return duit(str, /<code>[^]+?<\/code>/g, ident, function(str) {
-    return duit(str, /<[^>]+>/g, ident, function(s) {
-      s = s.replace(/(\S)'/g, "$1&rsquo;");
-      s = s.replace(/'(\S)/g, "&lsquo;$1");
+    return duit(str, /<!--[^]+?-->/g, ident, function(str) {
+      return duit(str, /<[^>]+>/g, ident, function(s) {
+        s = s.replace(/(\S)'/g, "$1&rsquo;");
+        s = s.replace(/'(\S)/g, "&lsquo;$1");
 
-      s = s.replace(/(\S)"/g, "$1&rdquo;");
-      s = s.replace(/"(\S)/g, "&ldquo;$1");
+        s = s.replace(/(\S)"/g, "$1&rdquo;");
+        s = s.replace(/"(\S)/g, "&ldquo;$1");
 
-      s = s.replace(/---([^-])/g, "&mdash;$1");
-      s = s.replace(/([^-])---/g, "$1&mdash;");
-      s = s.replace(/--([^-])/g, "&ndash;$1");
-      s = s.replace(/([^-])--/g, "$1&ndash;");
+        s = s.replace(/---([^-])/g, "&mdash;$1");
+        s = s.replace(/([^-])---/g, "$1&mdash;");
+        s = s.replace(/--([^-])/g, "&ndash;$1");
+        s = s.replace(/([^-])--/g, "$1&ndash;");
 
-      return s;
+        return s;
+      });
     });
   });
 }
