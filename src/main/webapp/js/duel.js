@@ -21,14 +21,14 @@ function dueval(str) {
 }
 
 function dusmart(s) {
-  s = s.replace(/(\w)'/g, "$1&rsquo;");
-  s = s.replace(/'(\w)/g, "&lsquo;$1");
+  s = s.replace(/(\S)'/g, "$1&rsquo;");
+  s = s.replace(/'(\S)/g, "&lsquo;$1");
 
-  s = s.replace(/(\w)"/g, "$1&rdquo;");
-  s = s.replace(/"(\w)/g, "&ldquo;$1");
+  s = s.replace(/(\S)"/g, "$1&rdquo;");
+  s = s.replace(/"(\S)/g, "&ldquo;$1");
 
-  s = s.replace(/([^\n-])---([\w ])/g, "$1&mdash;$2");
-  s = s.replace(/([^\n-])--([\w ])/g, "$1&ndash;$2");
+  s = s.replace(/([^-])---([^-])/g, "$1&mdash;$2");
+  s = s.replace(/([^-])--([^-])/g, "$1&ndash;$2");
 
   return s;
 }
