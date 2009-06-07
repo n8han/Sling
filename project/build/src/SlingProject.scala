@@ -15,7 +15,7 @@ class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
   override def unmanagedClasspath = super.unmanagedClasspath +++ js_classpath
   
   val jetty = "org.mortbay.jetty" % "jetty-ajp" % "6.1.17"
-  val dispatch = "net.databinder" % "dispatch" % "0.3.0"
+  val dispatch = "net.databinder" % "dispatch" % "0.3.3"
   val rhino = "rhino" % "js" % "1.7R1"
 
   override def ivyXML =
@@ -64,7 +64,7 @@ class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
   lazy val script = task {
     FileUtilities.write((info.projectPath / "run.sh").asFile,
       "java -cp " + 
-      (Path.makeString(runClasspath.get) :: scalaJars.map(_.getPath).toList)
+      (Path.makeString(runClasspath.get) :: mainDependencies.scalaJars.get.map(_.asFile).toList)
         .mkString(java.io.File.pathSeparator) + 
       " $JAVA_OPTIONS " + mainClass.mkString + "\n"
     , log)
