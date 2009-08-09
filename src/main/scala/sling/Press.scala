@@ -31,10 +31,9 @@ trait TitledContent extends Content {
 }
 
 case class TOC(db: Db, couch: Http, curr_id: String, query: String) extends Press {
-  import Js._
   lazy val html = 
     {
-      couch(View(db, "menu", "main") ># Couch.id_rows) map {
+      couch(MyCouch.menu_main(db)) map {
         case `curr_id` => <li> { curr_id } </li>
         case id => <li> <a href={ DbId(db, id) + query }>{ id }</a> </li> 
       } match {

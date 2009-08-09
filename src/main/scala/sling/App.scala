@@ -37,6 +37,8 @@ object MyCouch {
     Configgy.config.getString("couch.host","127.0.0.1"),
     Configgy.config.getInt("couch.port",5984)
   )
+  import Js._
+  def menu_main(db: Db) = View(db, "menu", "main") ># Couch.id_rows
 }
 
 object PageDoc extends Id {
@@ -147,7 +149,7 @@ object App {
           case (NotFound.toInt, _, _) => None 
         }
 
-      case Path(Index(db)) => Some(redirect(DbId(db, http(db.all_docs).first)))
+      case Path(Index(db)) => Some(redirect(DbId(db, http(MyCouch.menu_main(db)).first)))
       case _ => None
     }
   }
