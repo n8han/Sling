@@ -80,6 +80,7 @@ object SpliceTag {
 object App {
   Configgy.configure("/etc/sling.conf")
   import Js._
+  import Http._
   implicit val charSet = UTF8
   def content_type = "text/html; charset=UTF-8"
   
@@ -96,7 +97,7 @@ object App {
             case (k, v) => k.asString == IfNoneMatch
           } map { _._2.mkString } map {
             case ET(SpliceTag(couch_et, tweed, latest)) =>
-              val res = http(Search(tweed).results)
+              val res = http(Search(tweed))
               res.firstOption.filter { case Search.id(id) => id == latest } map { js =>
                 (Some(couch_et), Some(tweed), Some(res))
               } getOrElse { (None, Some(tweed), Some(res)) }
@@ -124,7 +125,7 @@ object App {
                 val PageDoc.body(md) = js
                 val (combo_tag, tweedy) = js match {
                   case PageDoc.tweed(t) => 
-                    val ljs = tweed_js.getOrElse { http(Search(t).results) }
+                    val ljs = tweed_js.getOrElse { http(Search(t)) }
                     val ct: String = ljs.firstOption.map {
                       case Search.id(id) => ET(SpliceTag(couch_et, t, id))
                     } getOrElse ET(couch_et)
