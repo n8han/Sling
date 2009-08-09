@@ -32,13 +32,26 @@ final class App extends StreamStreamServletApplication {
     })
 }
 
-object MyCouch {
+object Slouch {
   def apply() = Couch(
     Configgy.config.getString("couch.host","127.0.0.1"),
     Configgy.config.getInt("couch.port",5984)
   )
   import Js._
-  def menu_main(db: Db) = View(db, "menu", "main") ># Couch.id_rows
+  /** Get menu, create view if not present in db */
+  def menu_main(db: Db) = {
+    val menu = Design(db, "menu")
+    val main = View(menu, "main") ># Couch.id_rows
+    main {
+      case (404, _, _, _) =>
+        val h2 = new Http
+        h2(menu <<< ( Design.views <<| ('main <<| (View.map <<| 
+          "function(doc) { if (doc.menu.main_idx) emit(doc.menu.main_idx, null) }"
+        ))) >| )
+        h2(main)
+      case (_, _, _, out) => out()
+    }
+  }
 }
 
 object PageDoc extends Id {
@@ -51,7 +64,7 @@ object DbId {
   def to_id(web: String) = web.replaceAll("_", " ")
   val Re = "^/([a-z_]+)/([^/]+)$".r
   def unapply(path: String) = path match {
-    case Re(db, id) => Some(new Db(MyCouch(), db), to_id(id))
+    case Re(db, id) => Some(new Db(Slouch(), db), to_id(id))
     case _ => None
   }
   def apply(db: Db, id: String) = 
@@ -60,7 +73,7 @@ object DbId {
 object Index {
   val Re =  "^/([a-z_]+)/?$".r
   def unapply(path: String) = path match { 
-    case Re(db) => Some(Db(MyCouch(), db)) 
+    case Re(db) => Some(Db(Slouch(), db)) 
     case _ => None
   }
 }
@@ -149,7 +162,9 @@ object App {
           case (NotFound.toInt, _, _) => None 
         }
 
-      case Path(Index(db)) => Some(redirect(DbId(db, http(MyCouch.menu_main(db)).first)))
+      case Path(Index(db)) => (http x (Slouch menu_main db)).firstOption map { id =>
+        redirect(DbId(db, id))
+      }
       case _ => None
     }
   }

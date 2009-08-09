@@ -30,10 +30,10 @@ trait TitledContent extends Content {
   def head: Seq[Node] = <title> { title } </title>
 }
 
-case class TOC(db: Db, couch: Http, curr_id: String, query: String) extends Press {
+case class TOC(db: Db, http: Http, curr_id: String, query: String) extends Press {
   lazy val html = 
     {
-      couch(MyCouch.menu_main(db)) map {
+      (http x (Slouch menu_main db)) map {
         case `curr_id` => <li> { curr_id } </li>
         case id => <li> <a href={ DbId(db, id) + query }>{ id }</a> </li> 
       } match {
