@@ -13,14 +13,14 @@ class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
   override def mainClass = Some("sling.Server")
   override def unmanagedClasspath = super.unmanagedClasspath +++ js_classpath
   
-  val jetty_embed = "org.mortbay.jetty" % "jetty-ajp" % "6.1.17"
+  val jetty_embed = "org.mortbay.jetty" % "jetty-ajp" % "6.1.19"
   val dispatch_version = "0.5.2-SNAPSHOT"
   val dispatch_couch = "net.databinder" %% "dispatch-couch" % dispatch_version
   val dispatch_twitter = "net.databinder" %% "dispatch-twitter" % dispatch_version
   val rhino = "rhino" % "js" % "1.7R1"
   val slinky = "slinky" % "slinky" % "2.1" from "http://slinky2.googlecode.com/svn/artifacts/2.1/slinky.jar"
   val scalaz = "com.workingmouse" % "scalaz" % "3.3" from "http://scalaz.googlecode.com/svn/artifacts/3.3/scalaz.jar"
-  val configgy = "net.lag" % "configgy" % "1.3"
+  val configgy = "net.lag" % "configgy" % "1.3" intransitive()
 
   lazy val wmd = fileTask(wmd_src :: Nil) {
     import FileUtilities._ 
