@@ -46,7 +46,7 @@ object Slouch {
       case (404, _, _, _) =>
         val h2 = new Http
         h2(menu <<< ( Design.views <<| ('main <<| (View.map <<| 
-          "function(doc) { if (doc.menu.main_idx) emit(doc.menu.main_idx, null) }"
+          "function(doc) { if (doc.menu && doc.menu.main_idx) emit(doc.menu.main_idx, null) }"
         ))) >| )
         h2(main)
       case (_, _, _, out) => out()

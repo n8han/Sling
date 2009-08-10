@@ -8,7 +8,8 @@ class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
   val js_managed = (path("src_managed") / "main" ##) / "js"
   val wmd_src = js_managed / "wmd"
   val showdown_js = wmd_src / "showdown.js"
-  val duel_js = webappPath / "js" / "duel.js"
+  val webroot = outputPath / "webroot"
+  val duel_js = webroot / "js" / "duel.js"
 
   override def mainClass = Some("sling.Server")
   override def unmanagedClasspath = super.unmanagedClasspath +++ js_classpath
@@ -53,7 +54,9 @@ class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
   } dependsOn wmd
   
   override def compileAction = super.compileAction dependsOn(duel)
-  override def extraWebappFiles = js_managed ** ("*")
+  
+  lazy val copyWebroot = copyTask(js_managed ** "*", webroot) dependsOn
+    copyTask(("src" / "main" / "webroot" ##) ** "*", webroot)
 
   lazy val script = task {
     FileUtilities.write((info.projectPath / "run.sh").asFile,
