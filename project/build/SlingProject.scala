@@ -53,7 +53,7 @@ class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
       )
   } dependsOn wmd
   
-  override def compileAction = super.compileAction dependsOn(duel)
+  override def compileAction = super.compileAction dependsOn(duel, copyWebroot)
   
   lazy val copyWebroot = copyTask(js_managed ** "*", webroot) dependsOn
     copyTask(("src" / "main" / "webroot" ##) ** "*", webroot)
@@ -65,6 +65,6 @@ class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
         .mkString(java.io.File.pathSeparator) + 
       " $JAVA_OPTIONS " + mainClass.mkString + "\n"
     , log)
-  } dependsOn prepareWebapp
+  } dependsOn compile
 }
 
