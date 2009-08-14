@@ -1,6 +1,6 @@
 import sbt._
 
-class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
+class SlingProject(info: ProjectInfo) extends DefaultProject(info) with AssemblyProject
 {
   val lag_net = "lag.net repository" at "http://www.lag.net/repo"
 
@@ -8,7 +8,7 @@ class SlingProject(info: ProjectInfo) extends DefaultWebProject(info)
   val js_managed = (path("src_managed") / "main" ##) / "js"
   val wmd_src = js_managed / "wmd"
   val showdown_js = wmd_src / "showdown.js"
-  val webroot = outputPath / "webroot"
+  val webroot = outputPath / "resources" / "webroot"
   val duel_js = webroot / "js" / "duel.js"
 
   override def mainClass = Some("sling.Server")
