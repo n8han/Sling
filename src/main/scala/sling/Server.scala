@@ -32,6 +32,19 @@ object Server {
 
     server.setStopAtShutdown(true)
     server.start()
-    server.join()
+
+    // enter wait loop if not in main thread, e.g. running inside sbt
+    Thread.currentThread.getName match {
+      case "main" => server.join()
+      case _ => 
+        println("Embedded server running. Press any key to stop.")
+        def doWait() {
+          try { Thread.sleep(1000) } catch { case _: InterruptedException => () }
+          if(System.in.available() <= 0)
+            doWait()
+        }
+        doWait()
+        server.stop()
+    }
   }
 }
