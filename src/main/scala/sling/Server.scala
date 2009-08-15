@@ -21,12 +21,11 @@ object Server {
     val marker = getClass.getResource("/webroot/robots.txt").toString
     val webroot = marker.substring(0, marker.lastIndexOf("/"))
     val resource_handler = new ResourceHandler
-    val res = Resource.newResource(webroot)
-    resource_handler.setBaseResource(res)
+    resource_handler.setBaseResource(Resource.newResource(webroot))
     server.addHandler(resource_handler)
 
     val context = new Context(server,"/")
-    val holder = new ServletHolder(new slinky.http.servlet.StreamStreamServlet)
+    val holder = new ServletHolder(classOf[slinky.http.servlet.StreamStreamServlet])
     holder.setInitParameter("application", "sling.App")
     context.addServlet(holder, "/*")
     server.addHandler(context)

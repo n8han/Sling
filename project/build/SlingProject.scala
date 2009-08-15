@@ -53,10 +53,10 @@ class SlingProject(info: ProjectInfo) extends DefaultProject(info) with Assembly
       )
   } dependsOn wmd
   
-  override def compileAction = super.compileAction dependsOn(duel, copyWebroot)
+  override def compileAction = super.compileAction.dependsOn(duel, copyResources)
+  override def copyResourcesAction = super.copyResourcesAction && copyJsManaged
   
-  lazy val copyWebroot = copyTask(js_managed ** "*", webroot) dependsOn
-    copyTask(("src" / "main" / "webroot" ##) ** "*", webroot)
+  lazy val copyJsManaged = copyTask(js_managed ** "*", webroot)
 
   lazy val script = task {
     FileUtilities.write((info.projectPath / "run.sh").asFile,
