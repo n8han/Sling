@@ -57,14 +57,5 @@ class SlingProject(info: ProjectInfo) extends DefaultProject(info) with Assembly
   override def copyResourcesAction = super.copyResourcesAction && copyJsManaged
   
   lazy val copyJsManaged = copyTask(js_managed ** "*", webroot)
-
-  lazy val script = task {
-    FileUtilities.write((info.projectPath / "run.sh").asFile,
-      "java -cp " + 
-      (Path.makeString(runClasspath.get) :: mainDependencies.scalaJars.get.map(_.asFile).toList)
-        .mkString(java.io.File.pathSeparator) + 
-      " $JAVA_OPTIONS " + mainClass.mkString + "\n"
-    , log)
-  } dependsOn compile
 }
 
