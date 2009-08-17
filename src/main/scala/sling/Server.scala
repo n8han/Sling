@@ -30,13 +30,14 @@ object Server {
     context.addServlet(holder, "/*")
     server.addHandler(context)
 
-    server.setStopAtShutdown(true)
-    server.start()
-
     // enter wait loop if not in main thread, e.g. running inside sbt
     Thread.currentThread.getName match {
-      case "main" => server.join()
+      case "main" => 
+        server.setStopAtShutdown(true)
+        server.start()
+        server.join()
       case _ => 
+        server.start()
         println("Embedded server running. Press any key to stop.")
         def doWait() {
           try { Thread.sleep(1000) } catch { case _: InterruptedException => () }
