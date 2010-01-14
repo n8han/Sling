@@ -13,6 +13,7 @@ import scalaz.CharSet.UTF8
 import dispatch._
 import dispatch.couch._
 import dispatch.json._
+import dispatch.json.JsHttp._
 import dispatch.twitter.Search
 
 import org.apache.http.HttpResponse

@@ -3,6 +3,7 @@ import sbt._
 class SlingProject(info: ProjectInfo) extends DefaultProject(info) with AssemblyProject
 {
   val lag_net = "lag.net repository" at "http://www.lag.net/repo"
+  val databinder_net = "databinder.net repository" at "http://databinder.net/repo"
 
   val js_classpath = outputPath / "js_classes"
   val js_managed = (path("src_managed") / "main" ##) / "js"
@@ -15,7 +16,7 @@ class SlingProject(info: ProjectInfo) extends DefaultProject(info) with Assembly
   override def unmanagedClasspath = super.unmanagedClasspath +++ js_classpath
   
   val jetty_embed = "org.mortbay.jetty" % "jetty-ajp" % "6.1.19"
-  val dispatch_version = "0.5.2-SNAPSHOT"
+  val dispatch_version = "0.6.5"
   val dispatch_couch = "net.databinder" %% "dispatch-couch" % dispatch_version
   val dispatch_twitter = "net.databinder" %% "dispatch-twitter" % dispatch_version
   val rhino = "rhino" % "js" % "1.7R1"
