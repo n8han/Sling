@@ -35,7 +35,7 @@ case class TOC(db: Db, http: Http, curr_id: String, query: String) extends Press
     {
       (http x (Slouch menu_main db)) map {
         case `curr_id` => <li> { curr_id } </li>
-        case id => <li> <a href={ DbId(db, id) + query }>{ id }</a> </li> 
+        case id => <li> <a href={ DbId.to_path(id) + query }>{ id }</a> </li> 
       } match {
         case Seq(_) => Nil
         case lis => <h4><ul class="toc"> { lis } </ul></h4>
