@@ -78,13 +78,13 @@ object SpliceTag {
 object App {
   import Js._
   import Http._
-  val http = new Http
+  val http = new Http with Threads
   
 /*  def cache_heds(ri: HttpResponse, ro: Response[Stream], combo_tag: String) = 
     ro(Date, ri.getFirstHeader(Date).getValue)(CacheControl, "max-age=600")(ETag, combo_tag) */
 }
 
-class App extends unfiltered.Handler({
+class App extends unfiltered.Plan({
   case Path(DbId(db, id), req) =>
     val IfNoneMatch = "If-None-Match"
     val ETag = "ETag"

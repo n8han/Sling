@@ -15,7 +15,7 @@ class SlingProject(info: ProjectInfo) extends DefaultProject(info) with Assembly
   override def mainClass = Some("sling.Server")
   override def unmanagedClasspath = super.unmanagedClasspath +++ js_classpath
   
-  val dispatch_version = "0.6.5"
+  val dispatch_version = "0.7.3"
   val dispatch_couch = "net.databinder" %% "dispatch-couch" % dispatch_version
   val dispatch_twitter = "net.databinder" %% "dispatch-twitter" % dispatch_version
   val unfiltered = "net.databinder" %% "unfiltered-server" % "0.1.0-SNAPSHOT"
