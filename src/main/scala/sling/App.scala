@@ -1,16 +1,7 @@
 package sling
 
-import slinky.http.servlet.StreamStreamServletApplication
-import slinky.http.servlet.StreamStreamServletApplication.resourceOr
-import slinky.http.{ContentType, Date, CacheControl}
-import slinky.http.StreamStreamApplication._
-import slinky.http.request.Request.Stream.{MethodPath, Path}
-import slinky.http.request.{Request, GET, RequestHeader}
-import slinky.http.response.{Response, OK, NotFound, ETag, NotModified}
-import slinky.http.response.xhtml.Doctype.strict
-import scalaz.CharSet.UTF8
-
 import dispatch._
+import dispatch.Http._
 import dispatch.couch._
 import dispatch.json._
 import dispatch.json.JsHttp._
@@ -20,6 +11,9 @@ import org.apache.http.HttpResponse
 import org.apache.http.util.EntityUtils
 
 import net.lag.configgy.Configgy
+
+import unfiltered.request._
+import unfiltered.response._
 
 object Slouch {
   def apply() = Couch(
@@ -84,72 +78,67 @@ object SpliceTag {
 object App {
   import Js._
   import Http._
-  implicit val charSet = UTF8
-  def content_type = "text/html; charset=UTF-8"
+  val http = new Http
   
-  def cache_heds(ri: HttpResponse, ro: Response[Stream], combo_tag: String) = 
-    ro(Date, ri.getFirstHeader(Date).getValue)(CacheControl, "max-age=600")(ETag, combo_tag)
+/*  def cache_heds(ri: HttpResponse, ro: Response[Stream], combo_tag: String) = 
+    ro(Date, ri.getFirstHeader(Date).getValue)(CacheControl, "max-age=600")(ETag, combo_tag) */
 }
 
-class App extend unfiltered.Handler({
+class App extends unfiltered.Handler({
   case Path(DbId(db, id), req) =>
     val IfNoneMatch = "If-None-Match"
+    val ETag = "ETag"
     val (couch_et, tweed, tweed_js) =
-      request.headers.find {
-        case (k, v) => k.asString == IfNoneMatch
-      } map { _._2.mkString } map {
+      req.getHeader(IfNoneMatch) match {
         case ET(SpliceTag(couch_et, tweed, latest)) =>
-          val res = http(Search(tweed))
+          val res = App.http(Search(tweed))
           res.firstOption.filter { case Search.id(id) => id == latest } map { js =>
             (Some(couch_et), Some(tweed), Some(res))
           } getOrElse { (None, Some(tweed), Some(res)) }
         case ET(couch_et) =>
           (Some(couch_et), None, None)
         case _ => (None, None, None)
-      } getOrElse (None, None, None)
+      }
     val with_heds = couch_et map { tag => /\ <:< Map(IfNoneMatch -> ET(tag)) } getOrElse /\
-    (http x with_heds <& Doc(db, id)) {
-      case (OK.toInt, ri, Some(entity)) =>
+    (App.http x with_heds <& Doc(db, id)) {
+      case (200, ri, Some(entity)) =>
         val ET(couch_et) = ri.getFirstHeader(ETag).getValue
         id match {
-          case ("style.css") =>
-            Some(cache_heds(ri, OK(ContentType, "text/css; charset=UTF-8"), ET(couch_et)) << 
-              PageDoc.body(Js(entity.getContent())).toList
-            )
-          case (id) if request !? "edit" =>
-            Some(cache_heds(ri, OK(ContentType, content_type), ET(couch_et)) << strict << 
-              Page(EditDocument(TOC(db, http, id, "?edit"), 
-                EntityUtils.toString(entity, UTF8)
-              )).html
-            )
+          case ("style.css") => 
+            val PageDoc.body(css) = Js(entity.getContent)
+            new StringResponder(css) with CssContent
+          case (id) if req.getParameter("edit") != null =>
+            //Some(cache_heds(ri, OK(ContentType, content_type), ET(couch_et))
+            Page(EditDocument(TOC(db, App.http, id, "?edit"), 
+              EntityUtils.toString(entity, "utf8")
+            ))
           case (id) =>
             val js = Js(entity.getContent())
             val PageDoc.body(md) = js
             val (combo_tag, tweedy) = js match {
               case PageDoc.tweed(t) => 
-                val ljs = tweed_js.getOrElse { http(Search(t)) }
+                val ljs = tweed_js.getOrElse { App.http(Search(t)) }
                 val ct: String = ljs.firstOption.map {
                   case Search.id(id) => ET(SpliceTag(couch_et, t, id))
                 } getOrElse ET(couch_et)
                 (ct, Some(t, ljs))
               case _ => ( ET(couch_et), None )
             }
-            Some(cache_heds(ri, OK(ContentType, content_type), combo_tag) << strict << 
-              Page(ShowDocument(TOC(db, http, id, ""), md, tweedy)).html
-            )
+            //Some(cache_heds(ri, OK(ContentType, content_type), combo_tag) << strict << 
+            Page(ShowDocument(TOC(db, App.http, id, ""), md, tweedy))
         }
-      case (NotModified.toInt, ri, _) => Some(cache_heds(ri, NotModified, 
-        (couch_et, tweed, tweed_js) match {
+/*      case (NotModified.toInt, ri, _) => 
+        Some(cache_heds(ri, NotModified, (couch_et, tweed, tweed_js) match {
           case (Some(couch_et), Some(tweed), Some(Search.id(latest) :: _)) => 
             ET(SpliceTag(couch_et, tweed, latest))
           case (Some(couch_et), _, _) => ET(couch_et)
           case _ => ""
         }
-      ) )
-      case (NotFound.toInt, _, _) => None 
+      ) )*/
+      case (404, _, _) => Pass 
     }
-
-  case Path(Index(db)) => (http x (Slouch menu_main db)).firstOption map { id =>
+/*
+  case Path(Index(db), req) => (App.http x (Slouch menu_main db)).firstOption map { id =>
     redirect(DbId(db, id))
-  }
+  } */
 })

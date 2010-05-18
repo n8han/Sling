@@ -7,10 +7,10 @@ import dispatch.couch._
 import dispatch.json._
 import dispatch.twitter.Search
 
-trait Press { val html: Seq[Node] }
+import unfiltered.response._
 
-case class Page(content: Content) extends Press {
-  val html =
+object Page {
+  def apply(content: Content) = Html(
     <html xmlns="http://www.w3.org/1999/xhtml">
       <head>
         <link rel="stylesheet" href="/css/blueprint/screen.css" type="text/css" media="screen, projection" />
@@ -22,7 +22,9 @@ case class Page(content: Content) extends Press {
         { content.body }
       </body>
     </html>
+  )
 }
+
 trait Content { def head: Seq[Node]; def body: Elem }
 
 trait TitledContent extends Content {
@@ -30,7 +32,7 @@ trait TitledContent extends Content {
   def head: Seq[Node] = <title> { title } </title>
 }
 
-case class TOC(db: Db, http: Http, curr_id: String, query: String) extends Press {
+case class TOC(db: Db, http: Http, curr_id: String, query: String) {
   lazy val html = 
     {
       (http x (Slouch menu_main db)) map {
