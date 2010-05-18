@@ -137,8 +137,9 @@ class App extends unfiltered.Plan({
       ) )*/
       case (404, _, _) => Pass 
     }
-/*
-  case Path(Index(db), req) => (App.http x (Slouch menu_main db)).firstOption map { id =>
-    redirect(DbId(db, id))
-  } */
+
+  case Path(Index(db), req) => (App.http x (Slouch menu_main db)) match {
+    case id :: _ =>  Redirect(DbId(db, id))
+    case _ => Pass
+  }
 })
