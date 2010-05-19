@@ -80,8 +80,7 @@ object App {
   import Http._
   val http = new Http with Threads
   
-/*  def cache_heds(ri: HttpResponse, ro: Response[Stream], combo_tag: String) = 
-    ro(Date, ri.getFirstHeader(Date).getValue)(CacheControl, "max-age=600")(ETag, combo_tag) */
+  def etag(combo_tag: String) = CacheControl("max-age=600") ~> ETag(combo_tag)
 }
 
 class App extends unfiltered.Plan({
@@ -106,11 +105,10 @@ class App extends unfiltered.Plan({
         id match {
           case ("style.css") => 
             val PageDoc.body(css) = Js(entity.getContent)
-            new StringResponder(css) with CssContent
-          case (id) if req.getParameter("edit") != null =>
-            //Some(cache_heds(ri, OK(ContentType, content_type), ET(couch_et))
-            Page(EditDocument(TOC(db, App.http, id, "?edit"), 
-              EntityUtils.toString(entity, "utf8")
+            App.etag(ET(couch_et)) ~> CssContent ~> ResponseString(css)
+          case (id) if req.getParameter("edit") != null => 
+            App.etag(ET(couch_et)) ~> Page(EditDocument(
+              TOC(db, App.http, id, "?edit"), EntityUtils.toString(entity, "utf8")
             ))
           case (id) =>
             val js = Js(entity.getContent())
@@ -124,18 +122,18 @@ class App extends unfiltered.Plan({
                 (ct, Some(t, ljs))
               case _ => ( ET(couch_et), None )
             }
-            //Some(cache_heds(ri, OK(ContentType, content_type), combo_tag) << strict << 
-            Page(ShowDocument(TOC(db, App.http, id, ""), md, tweedy))
+            App.etag(combo_tag) ~> Page(ShowDocument(TOC(db, App.http, id, ""), md, tweedy))
         }
-/*      case (NotModified.toInt, ri, _) => 
-        Some(cache_heds(ri, NotModified, (couch_et, tweed, tweed_js) match {
-          case (Some(couch_et), Some(tweed), Some(Search.id(latest) :: _)) => 
-            ET(SpliceTag(couch_et, tweed, latest))
-          case (Some(couch_et), _, _) => ET(couch_et)
-          case _ => ""
-        }
-      ) )*/
-      case (404, _, _) => Pass 
+      case (NotModified.code, ri, _) => 
+        NotModified ~> App.etag(
+          (couch_et, tweed, tweed_js) match {
+            case (Some(couch_et), Some(tweed), Some(Search.id(latest) :: _)) => 
+              ET(SpliceTag(couch_et, tweed, latest))
+            case (Some(couch_et), _, _) => ET(couch_et)
+            case _ => ""
+          }
+        )
+      case (NotFound.code, _, _) => Pass 
     }
 
   case Path(Index(db), req) => (App.http x (Slouch menu_main db)) match {
