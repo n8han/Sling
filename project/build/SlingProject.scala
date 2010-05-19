@@ -18,7 +18,7 @@ class SlingProject(info: ProjectInfo) extends DefaultProject(info) with Assembly
   val dispatch_version = "0.7.3"
   val dispatch_couch = "net.databinder" %% "dispatch-couch" % dispatch_version
   val dispatch_twitter = "net.databinder" %% "dispatch-twitter" % dispatch_version
-  val unfiltered = "net.databinder" %% "unfiltered-ajp-server" % "0.1.0-SNAPSHOT"
+  val unfiltered = "net.databinder" %% "unfiltered-ajp-server" % "0.1.0"
   val rhino = "rhino" % "js" % "1.7R1"
   val configgy = "net.lag" % "configgy" % "1.3" intransitive()
 
