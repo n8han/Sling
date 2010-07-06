@@ -7,6 +7,6 @@ object Server {
     Configgy.configure("/etc/sling.conf")
     unfiltered.server.Ajp(9000).resources(
         getClass.getResource("/webroot/robots.txt")
-    ).filter(new App).start()
+    ).filter(new App).run()
   }
 }
