@@ -83,12 +83,11 @@ object App {
   def etag(combo_tag: String) = CacheControl("max-age=600") ~> ETag(combo_tag)
 }
 
-class App extends unfiltered.Plan({
+class App extends unfiltered.Planify({
   case Path(DbId(db, id), req) =>
-    val IfNoneMatch = "If-None-Match"
     val ETag = "ETag"
-    val (couch_et, tweed, tweed_js) =
-      req.getHeader(IfNoneMatch) match {
+    val (couch_et, tweed, tweed_js) = req match {
+      case IfNoneMatch(header, _) => header match {
         case ET(SpliceTag(couch_et, tweed, latest)) =>
           val res = App.http(Search(tweed))
           res.firstOption.filter { case Search.id(id) => id == latest } map { js =>
@@ -98,7 +97,9 @@ class App extends unfiltered.Plan({
           (Some(couch_et), None, None)
         case _ => (None, None, None)
       }
-    val with_heds = couch_et map { tag => /\ <:< Map(IfNoneMatch -> ET(tag)) } getOrElse /\
+      case _ => (None, None, None)
+    }
+    val with_heds = couch_et map { tag => /\ <:< Map(IfNoneMatch.name -> ET(tag)) } getOrElse /\
     (App.http x with_heds <& Doc(db, id)) {
       case (200, ri, Some(entity)) =>
         val ET(couch_et) = ri.getFirstHeader(ETag).getValue
